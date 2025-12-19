@@ -261,6 +261,7 @@ function Admin() {
   };
 
   const refreshData = () => {
+    setLoading(true);
     setRefreshTrigger(prev => prev + 1);
   };
 
@@ -695,6 +696,7 @@ function Admin() {
               onDeleteSuccess={(deletedId) => {
                 setRegistrations(prev => prev.filter(reg => reg.id !== deletedId));
               }}
+              loading={loading}
             />
           )}
 

@@ -10,12 +10,18 @@ function ViewRegistrations({
   tracks = [],
   handleTrackChange,
   refreshData,
-  onDeleteSuccess
+  onDeleteSuccess,
+  loading = false
 }) {
   const [sendingEmail, setSendingEmail] = useState(null);
   const [updatingDecision, setUpdatingDecision] = useState(null);
   const [newStatus, setNewStatus] = useState('');
   const [resetting, setResetting] = useState(null);
+  const [showingCommentsModal, setShowingCommentsModal] = useState(false);
+  const [selectedComments, setSelectedComments] = useState({ name: '', comments: '' });
+  const [showingAllCommentsModal, setShowingAllCommentsModal] = useState(false);
+  const [selectedAllComments, setSelectedAllComments] = useState('');
+  const [isDownloadingCSV, setIsDownloadingCSV] = useState(false);
 
   // Pagination state
   const [page, setPage] = useState(1);
@@ -104,37 +110,51 @@ function ViewRegistrations({
     return '"' + str.replace(/"/g, '""') + '"';
   };
 
-  const downloadCSV = () => {
+  const downloadCSV = async () => {
     if (filteredRegistrations.length === 0) return;
 
-    const headers = ["Paper Title", "Authors", "Email", "Phone", "Assigned Reviewer", "Created At", "Reviewer Statuses", "Admin Decision", "Final Submission"];
-    const rows = filteredRegistrations.map(reg => {
-      const reviewerStatuses = reg.reviewers && reg.reviewers.length > 0
-        ? reg.reviewers.map(r => `${r.name}: ${r.reviewStatus || 'Not reviewed'}`).join('; ')
-        : 'No reviewers assigned';
+    setIsDownloadingCSV(true);
+    try {
+      // Simulate async operation if needed, but for now it's synchronous
+      const headers = ["Paper Title", "Authors", "Email", "Phone", "Assigned Reviewer", "Created At", "Reviewer Statuses", "Reviewer Comments", "Track", "Comments", "Admin Decision", "Final Submission"];
+      const rows = filteredRegistrations.map(reg => {
+        const reviewerStatuses = reg.reviewers && reg.reviewers.length > 0
+          ? reg.reviewers.map(r => `${r.name}: ${r.reviewStatus || 'Not reviewed'}`).join('; ')
+          : 'No reviewers assigned';
+        const reviewerComments = reg.reviewers && reg.reviewers.length > 0
+          ? reg.reviewers.map(r => `${r.name}: ${r.comments || 'No comments'}`).join('; ')
+          : 'No reviewers assigned';
+        const comments = reg.reviewers && reg.reviewers.length > 0
+          ? reg.reviewers.map(r => `${r.name}: ${r.comments || 'No comments'}`).join('; ')
+          : 'No reviewers assigned';
 
-      return [
-        escapeCSVField(reg.paperTitle || ""),
-        escapeCSVField(Array.isArray(reg.authors) ? reg.authors.map(a => a.name).join(", ") : "N/A"),
-        escapeCSVField(reg.email || ""),
-        escapeCSVField(getPhone(reg)),
-        escapeCSVField((reg.reviewers && reg.reviewers.length > 0) ? reg.reviewers.map(r => r.name).join(", ") : 'Not assigned'),
-        escapeCSVField(new Date(reg.createdAt).toLocaleString()),
-        escapeCSVField(reviewerStatuses),
-        escapeCSVField(reg.status || 'Not reviewed'),
-        escapeCSVField(reg.finalSubmissionStatus || 'Not submitted'),
-      ].join(",");
-    });
+        return [
+          escapeCSVField(reg.paperTitle || ""),
+          escapeCSVField(Array.isArray(reg.authors) ? reg.authors.map(a => a.name).join(", ") : "N/A"),
+          escapeCSVField(reg.email || ""),
+          escapeCSVField(getPhone(reg)),
+          escapeCSVField((reg.reviewers && reg.reviewers.length > 0) ? reg.reviewers.map(r => r.name).join(", ") : 'Not assigned'),
+          escapeCSVField(new Date(reg.createdAt).toLocaleString()),
+          escapeCSVField(reviewerStatuses),
+          escapeCSVField(reg.tracks || ""),
+          escapeCSVField(comments),
+          escapeCSVField(reg.status || 'Not reviewed'),
+          escapeCSVField(reg.finalSubmissionStatus || 'Not submitted'),
+        ].join(",");
+      });
 
-    const csvContent = [headers.map(h => escapeCSVField(h)).join(","), ...rows].join("\n");
+      const csvContent = [headers.map(h => escapeCSVField(h)).join(","), ...rows].join("\n");
 
-    const blob = new Blob([csvContent], { type: "text/csv" });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "registrations.csv";
-    a.click();
-    window.URL.revokeObjectURL(url);
+      const blob = new Blob([csvContent], { type: "text/csv" });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "registrations.csv";
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } finally {
+      setIsDownloadingCSV(false);
+    }
   };
 
   // Generic base64 -> blob helper
@@ -467,12 +487,30 @@ function ViewRegistrations({
             <h3 className="text-base sm:text-lg font-semibold text-blue-700">Export Data</h3>
             <p className="text-sm text-gray-500">Download filtered registration data as CSV</p>
           </div>
-          <button
-            onClick={downloadCSV}
-            className="inline-flex items-center justify-center px-4 sm:px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-sm transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 w-full sm:w-auto"
-          >
-            Download CSV
-          </button>
+    <div className="flex gap-4 w-full sm:w-auto">
+      <button
+        onClick={downloadCSV}
+        disabled={isDownloadingCSV}
+        className={`inline-flex items-center justify-center px-4 sm:px-6 py-3 font-medium rounded-lg shadow-sm transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+          isDownloadingCSV
+            ? 'bg-gray-400 cursor-not-allowed text-gray-200'
+            : 'bg-blue-600 hover:bg-blue-700 text-white'
+        }`}
+      >
+        {isDownloadingCSV ? 'Downloading...' : 'Download CSV'}
+      </button>
+      <button
+        onClick={() => refreshData && refreshData()}
+        disabled={loading}
+        className={`inline-flex items-center justify-center px-4 sm:px-6 py-3 font-medium rounded-lg shadow-sm transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${
+          loading
+            ? 'bg-gray-400 cursor-not-allowed text-gray-200'
+            : 'bg-green-600 hover:bg-green-700 text-white'
+        }`}
+      >
+        {loading ? 'Loading...' : 'Refresh Data'}
+      </button>
+    </div>
         </div>
       </div>
 
@@ -541,7 +579,15 @@ function ViewRegistrations({
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm border border-blue-200 overflow-hidden">
+      <div className="bg-white rounded-lg shadow-sm border border-blue-200 overflow-hidden relative">
+        {loading && (
+          <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-10">
+            <div className="flex items-center space-x-2">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <span className="text-gray-600">Loading...</span>
+            </div>
+          </div>
+        )}
         {filteredRegistrations.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-gray-500 text-lg">
@@ -566,6 +612,9 @@ function ViewRegistrations({
                     <th className="px-2 sm:px-4 md:px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider whitespace-nowrap">Assigned Reviewer</th>
                     <th className="px-2 sm:px-4 md:px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider whitespace-nowrap">Created At</th>
                     <th className="px-2 sm:px-4 md:px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider whitespace-nowrap">Reviewer Statuses</th>
+                    <th className="px-2 sm:px-4 md:px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider whitespace-nowrap">Reviewer Comments</th>
+                    <th className="px-2 sm:px-4 md:px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider whitespace-nowrap">Track</th>
+                    
                     <th className="px-2 sm:px-4 md:px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider whitespace-nowrap">Admin Decision</th>
                     <th className="px-2 sm:px-4 md:px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider whitespace-nowrap">Final Submission</th>
                     <th className="px-2 sm:px-4 md:px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider whitespace-nowrap">Paper Submission</th>
@@ -621,17 +670,24 @@ function ViewRegistrations({
                           <div className="flex flex-col space-y-1 min-w-max">
                             {reg.reviewers && reg.reviewers.length > 0 ? (
                               reg.reviewers.map((reviewer, idx) => {
-                                let reviewerClass = 'px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-600';
-                                if (reviewer.reviewStatus === 'accepted') reviewerClass = 'px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800';
-                                else if (reviewer.reviewStatus === 'rejected') reviewerClass = 'px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-800';
-                                else if (reviewer.reviewStatus === 'under_review') reviewerClass = 'px-2 py-1 rounded text-xs font-medium bg-yellow-100 text-yellow-800';
-                                else if (reviewer.reviewStatus === 'accepted_with_minor_revision') reviewerClass = 'px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800';
-                                else if (reviewer.reviewStatus === 'accepted_with_major_revision') reviewerClass = 'px-2 py-1 rounded text-xs font-medium bg-purple-100 text-purple-800';
+                                let reviewerClass = 'px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 cursor-pointer';
+                                if (reviewer.reviewStatus === 'accepted') reviewerClass = 'px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800 hover:bg-green-200 cursor-pointer';
+                                else if (reviewer.reviewStatus === 'rejected') reviewerClass = 'px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-800 hover:bg-red-200 cursor-pointer';
+                                else if (reviewer.reviewStatus === 'under_review') reviewerClass = 'px-2 py-1 rounded text-xs font-medium bg-yellow-100 text-yellow-800 hover:bg-yellow-200 cursor-pointer';
+                                else if (reviewer.reviewStatus === 'accepted_with_minor_revision') reviewerClass = 'px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800 hover:bg-blue-200 cursor-pointer';
+                                else if (reviewer.reviewStatus === 'accepted_with_major_revision') reviewerClass = 'px-2 py-1 rounded text-xs font-medium bg-purple-100 text-purple-800 hover:bg-purple-200 cursor-pointer';
 
                                 return (
-                                  <span key={idx} className={reviewerClass}>
+                                  <button
+                                    key={idx}
+                                    onClick={() => {
+                                      setSelectedComments({ name: reviewer.name, comments: reviewer.comments || 'No comments available' });
+                                      setShowingCommentsModal(true);
+                                    }}
+                                    className={reviewerClass}
+                                  >
                                     {reviewer.name}: {reviewer.reviewStatus || 'Not reviewed'}
-                                  </span>
+                                  </button>
                                 );
                               })
                             ) : (
@@ -641,6 +697,32 @@ function ViewRegistrations({
                             )}
                           </div>
                         </td>
+                        <td className="px-2 sm:px-4 md:px-6 py-4 text-sm">
+                          <div className="flex flex-col space-y-1 min-w-max">
+                            {reg.reviewers && reg.reviewers.length > 0 ? (
+                              reg.reviewers.map((reviewer, idx) => (
+                                <button
+                                  key={idx}
+                                  onClick={() => {
+                                    setSelectedComments({ name: reviewer.name, comments: reviewer.comments || 'No comments available' });
+                                    setShowingCommentsModal(true);
+                                  }}
+                                  className="px-2 py-1 rounded text-xs font-medium bg-purple-100 text-purple-800 hover:bg-purple-200 cursor-pointer"
+                                >
+                                  {reviewer.name}: View Comments
+                                </button>
+                              ))
+                            ) : (
+                              <span className="px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-600">
+                                No reviewers assigned
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-2 sm:px-4 md:px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                          {reg.tracks || 'N/A'}
+                        </td>
+                        
                         <td className="px-2 sm:px-4 md:px-6 py-4 whitespace-nowrap">
                           {(() => {
                             let statusCls = 'px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-600';
@@ -795,6 +877,30 @@ function ViewRegistrations({
                   className="flex-1 px-4 py-2 bg-gray-300 text-gray-900 text-sm font-medium rounded-md shadow-sm hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-400"
                 >
                   Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showingCommentsModal && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
+          <div className="relative bg-white rounded-lg shadow-xl max-w-lg w-full">
+            <div className="p-4 sm:p-6">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Reviewer Comments</h3>
+              <p className="text-sm text-gray-500 mb-4">
+                Comments from {selectedComments.name}:
+              </p>
+              <div className="bg-gray-50 p-4 rounded-md mb-6 max-h-60 overflow-y-auto">
+                <p className="text-sm text-gray-700 whitespace-pre-wrap">{selectedComments.comments}</p>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowingCommentsModal(false)}
+                  className="flex-1 px-4 py-2 bg-gray-300 text-gray-900 text-sm font-medium rounded-md shadow-sm hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-400"
+                >
+                  Close
                 </button>
               </div>
             </div>
