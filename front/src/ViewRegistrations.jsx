@@ -58,7 +58,7 @@ function ViewRegistrations({
   // Reset page to 1 when filters or registrations change
   useEffect(() => {
     setPage(1);
-  }, [registrationFilters.fromDate, registrationFilters.toDate, registrationFilters.selectedTracks, registrations.length]);
+  }, [registrationFilters.fromDate, registrationFilters.toDate, registrationFilters.selectedTracks, registrationFilters.idFilter, registrationFilters.commentsFilter, registrations.length]);
 
   const filteredRegistrations = registrations.filter(registration => {
     // Date filter
@@ -85,6 +85,25 @@ function ViewRegistrations({
         regTracks.some(regTrack => regTrack === selectedTrack.toLowerCase())
       );
       if (!hasMatch) {
+        return false;
+      }
+    }
+
+    // ID filter
+    if (registrationFilters.idFilter && registrationFilters.idFilter.trim()) {
+      const idStr = String(registration.id || '').toLowerCase();
+      const filterStr = registrationFilters.idFilter.trim().toLowerCase();
+      if (!idStr.includes(filterStr)) {
+        return false;
+      }
+    }
+
+    // Comments filter
+    if (registrationFilters.commentsFilter) {
+      const hasComments = registration.reviewers && registration.reviewers.some(reviewer =>
+        reviewer.comments && reviewer.comments.trim().length > 0
+      );
+      if (!hasComments) {
         return false;
       }
     }
@@ -116,7 +135,7 @@ function ViewRegistrations({
     setIsDownloadingCSV(true);
     try {
       // Simulate async operation if needed, but for now it's synchronous
-      const headers = ["Paper Title", "Authors", "Email", "Phone", "Assigned Reviewer", "Created At", "Reviewer Statuses", "Reviewer Comments", "Track", "Comments", "Admin Decision", "Final Submission"];
+      const headers = ["ID", "Paper Title", "Authors", "Email", "Phone", "Assigned Reviewer", "Created At", "Reviewer Statuses", "Reviewer Comments", "Track", "Comments", "Admin Decision", "Final Submission"];
       const rows = filteredRegistrations.map(reg => {
         const reviewerStatuses = reg.reviewers && reg.reviewers.length > 0
           ? reg.reviewers.map(r => `${r.name}: ${r.reviewStatus || 'Not reviewed'}`).join('; ')
@@ -129,6 +148,7 @@ function ViewRegistrations({
           : 'No reviewers assigned';
 
         return [
+          escapeCSVField(reg.id || ""),
           escapeCSVField(reg.paperTitle || ""),
           escapeCSVField(Array.isArray(reg.authors) ? reg.authors.map(a => a.name).join(", ") : "N/A"),
           escapeCSVField(reg.email || ""),
@@ -579,6 +599,39 @@ function ViewRegistrations({
         </div>
       </div>
 
+      <div className="bg-white rounded-lg shadow-sm border border-blue-200 p-4 sm:p-6 mb-6">
+        <h3 className="text-base sm:text-lg font-semibold text-blue-700 mb-4">Filter Registrations by ID and Comments</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+          <div>
+            <label htmlFor="idFilter" className="block text-sm font-medium text-gray-700 mb-1">
+              ID Filter
+            </label>
+            <input
+              type="text"
+              id="idFilter"
+              name="idFilter"
+              value={registrationFilters.idFilter || ""}
+              onChange={handleFilterChange}
+              placeholder="Enter ID to filter"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="commentsFilter"
+              name="commentsFilter"
+              checked={registrationFilters.commentsFilter || false}
+              onChange={(e) => handleFilterChange({ target: { name: 'commentsFilter', value: e.target.checked } })}
+              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            />
+            <label htmlFor="commentsFilter" className="ml-2 block text-sm text-gray-900">
+              Has Comments
+            </label>
+          </div>
+        </div>
+      </div>
+
       <div className="bg-white rounded-lg shadow-sm border border-blue-200 overflow-hidden relative">
         {loading && (
           <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-10">
@@ -604,6 +657,7 @@ function ViewRegistrations({
               <table className="min-w-full divide-y divide-blue-200">
                 <thead className="bg-gradient-to-r from-blue-50 to-blue-100 sticky top-0 z-10">
                   <tr>
+                    <th className="px-2 sm:px-4 md:px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider whitespace-nowrap">Paper ID</th>
                     <th className="px-2 sm:px-4 md:px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider whitespace-nowrap">Paper Title</th>
                     <th className="px-2 sm:px-4 md:px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider whitespace-nowrap">Authors</th>
                     <th className="px-2 sm:px-4 md:px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider whitespace-nowrap">Email</th>
@@ -639,6 +693,7 @@ function ViewRegistrations({
 
                     return (
                       <tr key={reg.id || globalIndex} className={rowClass}>
+                        <td className="px-2 sm:px-4 md:px-6 py-4 whitespace-nowrap text-sm text-gray-700">{reg.id}</td>
                         <td className="px-2 sm:px-4 md:px-6 py-4 text-sm text-gray-900">
                           <div className="max-w-xs">
                             <p className="font-medium truncate" title={reg.paperTitle}>{reg.paperTitle}</p>
