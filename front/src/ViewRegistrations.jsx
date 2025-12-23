@@ -965,5 +965,4 @@ function ViewRegistrations({
     </div>
   );
 }
-
 export default ViewRegistrations;
