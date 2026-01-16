@@ -68,7 +68,50 @@ export const registrationModel = (db) => {
             console.error("Paper reviews table creation error:", err);
             return reject(err);
           }
-          resolve();
+
+          // Create paper_review_details table
+          const reviewDetailsQuery = `
+            CREATE TABLE IF NOT EXISTS paper_review_details (
+              id INT AUTO_INCREMENT PRIMARY KEY,
+              paperId INT NOT NULL,
+              reviewerId INT NOT NULL,
+              q1 TEXT,
+              q2 TEXT,
+              q3 TEXT,
+              q4 TEXT,
+              q5 TEXT,
+              q6 TEXT,
+              createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+              updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+              FOREIGN KEY (paperId) REFERENCES registrations(id) ON DELETE CASCADE,
+              FOREIGN KEY (reviewerId) REFERENCES users(id) ON DELETE CASCADE,
+              UNIQUE KEY unique_review_details (paperId, reviewerId)
+            )
+          `;
+          db.query(reviewDetailsQuery, (err) => {
+            if (err) {
+              console.error("Paper review details table creation error:", err);
+              return reject(err);
+            }
+
+            // Migrate existing comments to q1 in paper_review_details
+            const migrateQuery = `
+              INSERT INTO paper_review_details (paperId, reviewerId, q1)
+              SELECT paperId, reviewerId, comments
+              FROM paper_reviews
+              WHERE comments IS NOT NULL AND comments != ''
+              ON DUPLICATE KEY UPDATE q1 = VALUES(q1)
+            `;
+            db.query(migrateQuery, (err) => {
+              if (err) {
+                console.error("Migration error:", err);
+                // Don't fail the entire process if migration fails
+              } else {
+                console.log("Migration completed: existing comments moved to q1");
+              }
+              resolve();
+            });
+          });
         });
       });
     });

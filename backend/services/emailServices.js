@@ -1,5 +1,7 @@
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
+const loginUrl = process.env.FRONTEND_URL || 'https://nec.edu.in/ICoDSES/auth';
+
 
 dotenv.config();
 
@@ -84,7 +86,6 @@ export const sendReviewerCredentialsEmail = async (email, name, password) => {
     }
   });
 
-  const loginUrl = process.env.FRONTEND_URL || 'https://nec.edu.in/ICoDSES/auth';
 
   const isDefaultPassword = password === "12345678";
   const securityMessage = isDefaultPassword ? "Your password is set to the default '12345678'. For your security, please change your password immediately after your first login. You can update your password in your profile settings." : "For your security, please change your password after your first login. You can update your password in your profile settings.";
@@ -220,7 +221,7 @@ export const sendReviewerAssignmentEmail = async (reviewerEmail, reviewerName, p
           </ol>
 
           <div style="text-align: center; margin: 30px 0;">
-            <a href="https://nec.edu.in/ICoDSES/auth" style="background-color: #2E86C1; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">
+            <a href="${loginUrl}" style="background-color: #2E86C1; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">
               Access Reviewer Portal
             </a>
           </div>
@@ -285,12 +286,13 @@ export const sendPaperStatusUpdateEmail = async (authorEmail, authorName, paperT
             <p style="margin: 0;"><strong>Paper ID:</strong> ${paperId}</p>
             <p style="margin: 5px 0 0 0;"><strong>Paper Title:</strong> ${paperTitle}</p>
             <p style="margin: 5px 0 0 0;"><strong>Update Date:</strong> ${updateDate}</p>
-            <p style="margin: 5px 0 0 0;"><strong>Reviewed By:</strong> ${reviewerName}</p>
+           
           </div>
 
           <div style="background-color: #d1ecf1; border: 1px solid #bee5eb; padding: 15px; border-radius: 5px; margin: 20px 0;">
             <h3 style="color: #0c5460; margin-top: 0;">📋 Status Update</h3>
             <p style="margin-bottom: 0; color: #0c5460;"><strong>New Status:</strong> ${statusText}</p>
+            ${status === "rejected" && comments ? `<div style="background-color: #f8d7da; border: 1px solid #f5c6cb; padding: 15px; border-radius: 5px; margin: 20px 0;"><h4 style="color: #721c24; margin-top: 0;">Rejection Note</h4><p style="margin-bottom: 0; color: #721c24;">We regret to inform you that your paper has been rejected. ${comments}</p></div>` : ''}
           </div>
 
           <p><strong>What happens next?</strong></p>
@@ -301,7 +303,7 @@ export const sendPaperStatusUpdateEmail = async (authorEmail, authorName, paperT
           </ul>
 
           <div style="text-align: center; margin: 30px 0;">
-            <a href="#" style="background-color: #2E86C1; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">
+            <a href="${loginUrl}" style="background-color: #2E86C1; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">
               Check Paper Status
             </a>
           </div>
@@ -383,7 +385,7 @@ export const sendFinalSubmissionResetEmail = async (authorEmail, authorName, pap
           </ul>
 
           <div style="text-align: center; margin: 30px 0;">
-            <a href="#" style="background-color: #2E86C1; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">
+            <a href="${loginUrl}" style="background-color: #2E86C1; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">
               Resubmit Paper
             </a>
           </div>
@@ -464,7 +466,7 @@ export const sendAdminPaperNotificationEmail = async (paperId, paperTitle, autho
           </div>
 
           <div style="text-align: center; margin: 30px 0;">
-            <a href="#" style="background-color: #2E86C1; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">
+            <a href="${loginUrl}" style="background-color: #2E86C1; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">
               Access Admin Panel
             </a>
           </div>

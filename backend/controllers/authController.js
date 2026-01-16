@@ -54,13 +54,16 @@ export const signup = async (req, res) => {
 };
 
 export const login = async (req, res) => {
+  console.log('Login attempt for email:', req.body.email);
   const { email, password } = req.body;
 
   if (!email || !password) {
+    console.log('Missing email or password');
     return res.status(400).json({ error: 'Email and password are required' });
   }
 
   try {
+    console.log('Querying database for user');
     const query = 'SELECT id, name, email, password, role, track, isFirstLogin FROM users WHERE email = ?';
     db.query(query, [email], async (err, results) => {
       if (err) {
@@ -68,18 +71,24 @@ export const login = async (req, res) => {
         return res.status(500).json({ error: 'Database error' });
       }
 
+      console.log('Database query result:', results.length, 'users found');
       if (results.length === 0) {
+        console.log('No user found with email:', email);
         return res.status(400).json({ error: 'Invalid credentials' });
       }
 
       const user = results[0];
+      console.log('User found:', user.id, user.email);
 
+      console.log('Comparing password');
       const isMatch = await bcrypt.compare(password, user.password);
 
       if (!isMatch) {
+        console.log('Password mismatch');
         return res.status(400).json({ error: 'Invalid credentials' });
       }
 
+      console.log('Password match, generating token');
       const token = jwt.sign({ id: user.id, name: user.name, email: user.email, role: user.role, track: user.track, isFirstLogin: user.isFirstLogin }, JWT_SECRET, { expiresIn: '24h' });
 
       const responseUser = {
@@ -94,6 +103,7 @@ export const login = async (req, res) => {
         responseUser.isFirstLogin = true;
       }
 
+      console.log('Login successful for user:', user.id);
       res.json({
         message: 'Login successful',
         token,

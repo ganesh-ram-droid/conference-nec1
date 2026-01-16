@@ -22,7 +22,8 @@ import {
   updateRegistrationStatus,
   getTotalRegistrations,
   downloadFinalPaper,
-  resetFinalSubmission
+  resetFinalSubmission,
+  getPaperWithReviewerComments
 } from "../controllers/adminController.js";
 import {
   getSupportTickets,
@@ -72,5 +73,8 @@ router.get("/download-final-paper/:paperId", authenticateToken, downloadFinalPap
 
 // Reset final submission
 router.put("/registrations/:id/reset-final-submission", authenticateToken, resetFinalSubmission);
+
+// Get paper with reviewer comments
+router.get("/paper-with-comments/:paperId", authenticateToken, getPaperWithReviewerComments);
 
 export default router;

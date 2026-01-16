@@ -163,8 +163,10 @@ app.use(cookieParser());
     });
   });
 
-  // Seed Admin
-  seedAdmin();
+  // Seed Admin (don't let it crash the server)
+  seedAdmin().catch(err => {
+    console.error('Error seeding admin:', err);
+  });
 
   // Apply rate limiter to all APIs under /icodses
   app.use("/icodses", apiRateLimiter);
@@ -211,7 +213,10 @@ app.use(cookieParser());
   );
 
   const PORT = process.env.PORT || 5800;
+  console.log(`Attempting to start server on port ${PORT}`);
   app.listen(PORT, () =>
     console.log(`🚀 Server running on ${PORT}`)
-  );
+  ).on('error', (err) => {
+    console.error('Server failed to start:', err);
+  });
 });

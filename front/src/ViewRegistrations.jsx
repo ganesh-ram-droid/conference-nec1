@@ -16,6 +16,7 @@ function ViewRegistrations({
   const [sendingEmail, setSendingEmail] = useState(null);
   const [updatingDecision, setUpdatingDecision] = useState(null);
   const [newStatus, setNewStatus] = useState('');
+  const [adminComments, setAdminComments] = useState('');
   const [resetting, setResetting] = useState(null);
   const [showingCommentsModal, setShowingCommentsModal] = useState(false);
   const [selectedComments, setSelectedComments] = useState({ name: '', comments: '' });
@@ -366,15 +367,21 @@ function ViewRegistrations({
       const headers = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
+      const payload = { status };
+      if (adminComments.trim()) {
+        payload.adminComments = adminComments.trim();
+      }
+
       const res = await fetch(`https://nec.edu.in/icodses/admin/registrations/${id}/status`, {
         method: 'PUT',
         headers,
-        body: JSON.stringify({ status })
+        body: JSON.stringify(payload)
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok) {
         alert('Decision updated successfully');
         setUpdatingDecision(null);
+        setAdminComments('');
         if (typeof refreshData === 'function') refreshData();
       } else {
         alert(data.error || 'Failed to update decision');
@@ -821,10 +828,16 @@ function ViewRegistrations({
                                 {isSending ? 'Sending...' : 'Send Status'}
                               </button>
                             )}
+                            {notificationSent && (
+    <span className="inline-block text-center px-2 py-1 text-xs font-semibold rounded-md bg-red-100 text-red-700 border border-red-300">
+      Email Sent
+    </span>
+  )}
                             <button
                               onClick={() => {
                                 setUpdatingDecision(reg.id);
                                 setNewStatus(reg.status || 'under_review');
+                                setAdminComments('');
                               }}
                               className="inline-flex items-center justify-center px-2 sm:px-3 py-2 text-xs font-medium rounded-md shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 bg-blue-600 hover:bg-blue-700 text-white"
                             >
@@ -844,6 +857,7 @@ function ViewRegistrations({
                               >
                                 {resetting === reg.id ? 'Resetting...' : 'Reset Final'}
                               </button>
+
                             )}
                           </div>
                         </td>
@@ -906,12 +920,12 @@ function ViewRegistrations({
             <div className="p-4 sm:p-6">
               <h3 className="text-lg font-medium text-gray-900 mb-4">Update Decision</h3>
               <p className="text-sm text-gray-500 mb-4">
-                Select the new decision status for this registration.
+                Select the new decision status for this registration and add any admin comments if necessary.
               </p>
               <select
                 value={newStatus}
                 onChange={(e) => setNewStatus(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 mb-6"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 mb-4"
               >
                 <option value="under_review">Under Review</option>
                 <option value="accepted">Accepted</option>
@@ -920,6 +934,13 @@ function ViewRegistrations({
                 <option value="accepted_with_major_revision">Accepted with Major Revision</option>
 
               </select>
+              <textarea
+                value={adminComments}
+                onChange={(e) => setAdminComments(e.target.value)}
+                placeholder="Enter admin comments (optional)"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 mb-6"
+                rows="4"
+              ></textarea>
               <div className="flex gap-3">
                 <button
                   onClick={() => handleUpdateDecision(updatingDecision, newStatus)}

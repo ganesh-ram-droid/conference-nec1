@@ -362,10 +362,12 @@ export const assignReviewerDirect = async (paperId, reviewerId) => {
 
               // Send email notification to reviewer (don't fail assignment if email fails)
               try {
+                console.log(`Attempting to send assignment email to: ${reviewerEmail}`);
                 await sendReviewerAssignmentEmail(reviewerEmail, reviewerName, paperTitle, paperId);
-                console.log(`Assignment notification sent to reviewer: ${reviewerEmail}`);
+                console.log(`✅ Assignment notification sent successfully to reviewer: ${reviewerEmail}`);
               } catch (emailError) {
-                console.error('Failed to send assignment notification email:', emailError.message);
+                console.error('❌ Failed to send assignment notification email:', emailError.message);
+                console.error('Full email error details:', emailError);
                 // Continue without failing
               }
 
@@ -667,7 +669,7 @@ export const updatePaperStatus = (req, res) => {
     return res.status(403).json({ error: 'Access denied. Reviewer only.' });
   }
 
-  const { paperId, status, comments } = req.body;
+  const { paperId, status, comments, q1, q2, q3, q4, q5, q6 } = req.body;
   const reviewerId = req.user.id;
 
   if (!paperId || !status) {
@@ -701,17 +703,43 @@ export const updatePaperStatus = (req, res) => {
         reviewedAt = CURRENT_TIMESTAMP
       `;
 
-      db.query(upsertQuery, [paperId, reviewerId, status, comments], async (err, result) => {
+      db.query(upsertQuery, [paperId, reviewerId, status, comments], (err, result) => {
         if (err) {
           console.error('DB error updating review:', err);
           return res.status(500).json({ error: 'Database error' });
         }
 
-        res.json({
-          message: 'Paper status updated successfully',
-          paperId,
-          status,
-          comments
+        // Update or insert review details (q1-q6)
+        const upsertDetailsQuery = `
+          INSERT INTO paper_review_details (paperId, reviewerId, q1, q2, q3, q4, q5, q6)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+          ON DUPLICATE KEY UPDATE
+          q1 = VALUES(q1),
+          q2 = VALUES(q2),
+          q3 = VALUES(q3),
+          q4 = VALUES(q4),
+          q5 = VALUES(q5),
+          q6 = VALUES(q6)
+        `;
+
+        db.query(upsertDetailsQuery, [paperId, reviewerId, q1, q2, q3, q4, q5, q6], (err, detailsResult) => {
+          if (err) {
+            console.error('DB error updating review details:', err);
+            return res.status(500).json({ error: 'Database error' });
+          }
+
+          res.json({
+            message: 'Paper status updated successfully',
+            paperId,
+            status,
+            comments,
+            q1,
+            q2,
+            q3,
+            q4,
+            q5,
+            q6
+          });
         });
       });
     });
@@ -1001,7 +1029,7 @@ export const getPapersAvailableForAssignment = (req, res) => {
     return res.status(403).json({ error: 'Access denied. Admin only.' });
   }
 
-  const { fromDate, toDate, paperTracks } = req.query;
+  const { fromDate, toDate, paperTracks, reviewerTracks } = req.query;
   let query = `
     SELECT
       r.id,
@@ -1018,7 +1046,7 @@ export const getPapersAvailableForAssignment = (req, res) => {
     LEFT JOIN paper_assignments pa ON r.id = pa.paperId
     LEFT JOIN users u1 ON pa.reviewer1 = u1.id
     LEFT JOIN users u2 ON pa.reviewer2 = u2.id
-    WHERE CASE WHEN pa.reviewer1 IS NOT NULL THEN 1 ELSE 0 END + CASE WHEN pa.reviewer2 IS NOT NULL THEN 1 ELSE 0 END < 2
+    WHERE CASE WHEN pa.reviewer1 IS NOT NULL THEN 1 ELSE 0 END + CASE WHEN pa.reviewer2 IS NOT NULL THEN 1 ELSE 0 END <2
   `;
   const params = [];
   const conditions = [];
@@ -1063,6 +1091,11 @@ export const getPapersAvailableForAssignment = (req, res) => {
       assignedReviewers: paper.assignedReviewers,
       currentReviewers: paper.currentReviewers ? paper.currentReviewers.split('; ').filter(name => name) : []
     }));
+
+    // Prevent caching to avoid ERR_CACHE_WRITE_FAILURE
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
 
     res.json(processedResults);
   });
@@ -1262,6 +1295,11 @@ export const getRegistrationsWithAssignments = (req, res) => {
         reviewers: assignmentsByPaper[registration.id] || []
       }));
 
+      // Prevent caching to avoid ERR_CACHE_WRITE_FAILURE
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+
       res.json(processedResults);
     });
   });
@@ -1303,6 +1341,11 @@ export const getRegistrationAnalytics = (req, res) => {
         return res.status(500).json({ error: 'Database error' });
       }
 
+      // Prevent caching to avoid ERR_CACHE_WRITE_FAILURE
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+
       res.json({
         countries: countryResults,
         states: stateResults
@@ -1310,6 +1353,8 @@ export const getRegistrationAnalytics = (req, res) => {
     });
   });
 };
+
+
 
 // Delete registration by ID (admin only)
 export const deleteRegistration = (req, res) => {
@@ -1369,9 +1414,9 @@ export const updateRegistrationStatus = (req, res) => {
   }
 
   const { id } = req.params;
-  const { status } = req.body;
+  const { status, adminComments } = req.body;
 
-  console.log(`Update registration status request: id=${id}, status=${status}`);
+  console.log(`Update registration status request: id=${id}, status=${status}, adminComments=${adminComments}`);
 
   if (!id || !status) {
     console.error('Missing required parameters: id or status');
@@ -1396,9 +1441,18 @@ export const updateRegistrationStatus = (req, res) => {
       return res.status(404).json({ error: 'Registration not found' });
     }
 
-    // Now update the status
-    const updateQuery = 'UPDATE registrations SET status = ? WHERE id = ?';
-    db.query(updateQuery, [status, id], (err, result) => {
+    // Now update the status and comments if provided
+    let updateQuery;
+    let params;
+    if (status === 'rejected' && adminComments) {
+      updateQuery = 'UPDATE registrations SET status = ?, comments = ? WHERE id = ?';
+      params = [status, adminComments, id];
+    } else {
+      updateQuery = 'UPDATE registrations SET status = ? WHERE id = ?';
+      params = [status, id];
+    }
+
+    db.query(updateQuery, params, (err, result) => {
       if (err) {
         console.error('DB error updating registration status:', err);
         console.error('Error details:', {
@@ -1415,8 +1469,8 @@ export const updateRegistrationStatus = (req, res) => {
         return res.status(404).json({ error: 'Registration not found' });
       }
 
-      console.log(`Registration status updated successfully: id=${id}, status=${status}`);
-      res.json({ message: 'Registration status updated successfully', id, status });
+      console.log(`Registration status updated successfully: id=${id}, status=${status}, comments=${adminComments || 'none'}`);
+      res.json({ message: 'Registration status updated successfully', id, status, comments: adminComments });
     });
   });
 };
@@ -1551,6 +1605,139 @@ export const resetFinalSubmission = (req, res) => {
     console.error('Reset final submission error:', error);
     res.status(500).json({ error: 'Server error' });
   }
+};
+
+// Get single paper with reviewer comments and details (admin only) - OPTIMIZED VERSION
+export const getPaperWithReviewerComments = (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Access denied. Admin only.' });
+  }
+
+  const { paperId } = req.params;
+
+  if (!paperId) {
+    return res.status(400).json({ error: 'Paper ID is required' });
+  }
+
+  // Single optimized query combining paper details and reviewer information
+  const combinedQuery = `
+    SELECT
+      r.id,
+      r.userId,
+      r.paperTitle,
+      r.authors,
+      r.email,
+      r.createdAt,
+      r.abstractBlob,
+      r.finalPaperBlob,
+      r.tracks,
+      r.status,
+      r.finalSubmissionStatus,
+      r.notificationSent,
+      pa.reviewer1,
+      pa.reviewer2,
+      u1.name as reviewer1Name,
+      u2.name as reviewer2Name,
+      pr1.status as reviewStatus1,
+      pr1.comments as comments1,
+      pr1.reviewedAt as reviewedAt1,
+      prd1.q1 as q1_1,
+      prd1.q2 as q2_1,
+      prd1.q3 as q3_1,
+      prd1.q4 as q4_1,
+      prd1.q5 as q5_1,
+      prd1.q6 as q6_1,
+      pr2.status as reviewStatus2,
+      pr2.comments as comments2,
+      pr2.reviewedAt as reviewedAt2,
+      prd2.q1 as q1_2,
+      prd2.q2 as q2_2,
+      prd2.q3 as q3_2,
+      prd2.q4 as q4_2,
+      prd2.q5 as q5_2,
+      prd2.q6 as q6_2
+    FROM registrations r
+    LEFT JOIN paper_assignments pa ON r.id = pa.paperId
+    LEFT JOIN users u1 ON pa.reviewer1 = u1.id
+    LEFT JOIN users u2 ON pa.reviewer2 = u2.id
+    LEFT JOIN paper_reviews pr1 ON r.id = pr1.paperId AND pa.reviewer1 = pr1.reviewerId
+    LEFT JOIN paper_reviews pr2 ON r.id = pr2.paperId AND pa.reviewer2 = pr2.reviewerId
+    LEFT JOIN paper_review_details prd1 ON r.id = prd1.paperId AND pa.reviewer1 = prd1.reviewerId
+    LEFT JOIN paper_review_details prd2 ON r.id = prd2.paperId AND pa.reviewer2 = prd2.reviewerId
+    WHERE r.id = ?
+  `;
+
+  db.query(combinedQuery, [paperId], (err, results) => {
+    if (err) {
+      console.error('DB error fetching paper with reviews:', err);
+      return res.status(500).json({ error: 'Database error' });
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ error: 'Paper not found' });
+    }
+
+    const row = results[0];
+
+    // Process reviewers
+    const reviewers = [];
+    if (row.reviewer1) {
+      reviewers.push({
+        id: row.reviewer1,
+        name: row.reviewer1Name,
+        reviewStatus: row.reviewStatus1,
+        comments: row.comments1,
+        reviewedAt: row.reviewedAt1,
+        questions: {
+          q1: row.q1_1,
+          q2: row.q2_1,
+          q3: row.q3_1,
+          q4: row.q4_1,
+          q5: row.q5_1,
+          q6: row.q6_1
+        }
+      });
+    }
+
+    if (row.reviewer2) {
+      reviewers.push({
+        id: row.reviewer2,
+        name: row.reviewer2Name,
+        reviewStatus: row.reviewStatus2,
+        comments: row.comments2,
+        reviewedAt: row.reviewedAt2,
+        questions: {
+          q1: row.q1_2,
+          q2: row.q2_2,
+          q3: row.q3_2,
+          q4: row.q4_2,
+          q5: row.q5_2,
+          q6: row.q6_2
+        }
+      });
+    }
+
+    // Process paper data
+    const processedPaper = {
+      id: row.id,
+      userId: row.userId,
+      paperTitle: row.paperTitle,
+      authors: typeof row.authors === 'string'
+        ? JSON.parse(row.authors)
+        : row.authors,
+      email: row.email,
+      createdAt: row.createdAt,
+      abstractBlob: row.abstractBlob ? Buffer.from(row.abstractBlob).toString('base64') : null,
+      finalPaperBlob: row.finalPaperBlob ? Buffer.from(row.finalPaperBlob).toString('base64') : null,
+      tracks: row.tracks,
+      status: row.status,
+      finalSubmissionStatus: row.finalSubmissionStatus,
+      notificationSent: row.notificationSent,
+      reviewers: reviewers
+    };
+
+    res.json(processedPaper);
+  });
 };
 
 // Download final paper (admin or owner)

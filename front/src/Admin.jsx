@@ -4,6 +4,7 @@ import { AuthContext } from "./AuthContext";
 import ViewRegistrations from "./ViewRegistrations";
 import AssignReviewer from "./AssignReviewer";
 import Analytics from "./Analytics";
+import ReviewerComments from "./ReviewerComments";
 
 const  API_URL = "https://nec.edu.in/icodses/admin/registrations-with-assignments";
 const CREATE_REVIEWER_URL = "https://nec.edu.in/icodses/admin/create-reviewer";
@@ -467,6 +468,14 @@ function Admin() {
                   Analytics
                 </button>
               </li>
+              <li>
+                <button
+                  onClick={() => setActiveSection('reviewer-comments')}
+                  className={`w-full text-left p-2 rounded ${activeSection === 'reviewer-comments' ? 'bg-blue-100 text-blue-800' : 'hover:bg-gray-100'}`}
+                >
+                  Reviewer Comments
+                </button>
+              </li>
             </ul>
           </nav>
         </div>
@@ -712,6 +721,13 @@ function Admin() {
             <Analytics
               registrations={registrations}
               analyticsData={analyticsData}
+            />
+          )}
+
+          {activeSection === 'reviewer-comments' && (
+            <ReviewerComments
+              registrations={registrations}
+              refreshData={refreshData}
             />
           )}
         </div>

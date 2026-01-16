@@ -29,6 +29,7 @@ export function query(sql, params, cb) {
 pool.getConnection((err, connection) => {
   if (err) {
     console.error("❌ MySQL connection error:", err.message || err);
+    console.error("Full error:", err);
     return;
   }
   console.log("✅ MySQL Pool connected...");

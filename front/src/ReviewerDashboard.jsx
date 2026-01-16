@@ -10,9 +10,8 @@ function ReviewerDashboard() {
   const navigate = useNavigate();
   const [assignedPapers, setAssignedPapers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedPaper, setSelectedPaper] = useState(null);
-  const [status, setStatus] = useState('');
-  const [comments, setComments] = useState('');
+  const [expandedPaper, setExpandedPaper] = useState(null);
+  const [reviewData, setReviewData] = useState({});
   const [updating, setUpdating] = useState(false);
 
 
@@ -61,7 +60,9 @@ function ReviewerDashboard() {
 
   const handleStatusUpdate = async (e) => {
     e.preventDefault();
-    if (!selectedPaper || !status) return;
+    const paperId = expandedPaper;
+    const data = reviewData[paperId];
+    if (!paperId || !data.status) return;
 
     setUpdating(true);
     try {
@@ -73,18 +74,23 @@ function ReviewerDashboard() {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          paperId: selectedPaper.id,
-          status,
-          comments
+          paperId,
+          status: data.status,
+          comments: data.comments,
+          q1: data.q1,
+          q2: data.q2,
+          q3: data.q3,
+          q4: data.q4,
+          q5: data.q5,
+          q6: data.q6
         })
       });
 
-      const data = await res.json();
+      const responseData = await res.json();
       if (res.ok) {
         alert('Paper status updated successfully!');
-        setSelectedPaper(null);
-        setStatus('');
-        setComments('');
+        setExpandedPaper(null);
+        setReviewData({});
 
         // Refresh the assigned papers list
         const refreshRes = await fetch(`${API_BASE_URL}/reviewer/assigned-papers`, {
@@ -99,7 +105,7 @@ function ReviewerDashboard() {
           setAssignedPapers(refreshData);
         }
       } else {
-        alert(`Error: ${data.error}`);
+        alert(`Error: ${responseData.error}`);
       }
     } catch (err) {
       console.error("Error updating paper status:", err);
@@ -107,6 +113,38 @@ function ReviewerDashboard() {
     } finally {
       setUpdating(false);
     }
+  };
+
+  const toggleAccordion = (paperId) => {
+    if (expandedPaper === paperId) {
+      setExpandedPaper(null);
+    } else {
+      setExpandedPaper(paperId);
+      // Initialize review data for this paper
+      setReviewData(prev => ({
+        ...prev,
+        [paperId]: {
+          status: '',
+          comments: '',
+          q1: '',
+          q2: '',
+          q3: '',
+          q4: '',
+          q5: '',
+          q6: ''
+        }
+      }));
+    }
+  };
+
+  const updateReviewData = (paperId, field, value) => {
+    setReviewData(prev => ({
+      ...prev,
+      [paperId]: {
+        ...prev[paperId],
+        [field]: value
+      }
+    }));
   };
 
   const getStatusColor = (status) => {
@@ -126,7 +164,7 @@ function ReviewerDashboard() {
     if (typeof authors === 'string') {
       try {
         authors = JSON.parse(authors);
-      } catch (e) {
+      } catch {
         return authors;
       }
     }
@@ -253,6 +291,15 @@ function ReviewerDashboard() {
                 <p className="text-xs text-gray-600 mb-0.5">Your Track</p>
                 <p className="text-sm font-bold text-blue-900">{user?.track || 'Not Assigned'}</p>
               </div>
+              <button
+                onClick={logout}
+                className="inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg shadow-md transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+              >
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                Logout
+              </button>
             </div>
           </div>
         </div>
@@ -359,7 +406,7 @@ function ReviewerDashboard() {
                         Abstract
                         {paper.updatedAt && new Date(paper.updatedAt) > new Date(paper.assignedAt) && (
                           <span className="ml-2 px-3 py-1 bg-orange-500 text-white text-xs font-bold rounded-full shadow-sm animate-pulse">
-                            Resubmitted
+                            Inital Paper Submission
                           </span>
                         )}
                       </h4>
@@ -434,13 +481,13 @@ function ReviewerDashboard() {
 
                 <div className="flex justify-between items-center pt-4 border-t border-gray-100">
                   <button
-                    onClick={() => setSelectedPaper(paper)}
+                    onClick={() => toggleAccordion(paper.id)}
                     className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-sm font-bold rounded-xl shadow-md transition-all duration-200 transform hover:scale-105 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                   >
-                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    <svg className={`w-5 h-5 mr-2 transition-transform ${expandedPaper === paper.id ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
-                    Update Status
+                    {expandedPaper === paper.id ? 'Hide Review Form' : 'Update Status'}
                   </button>
 
                   {(paper.status === 'accepted' || paper.status === 'accepted_with_minor_revision' || paper.status === 'accepted_with_major_revision') && (
@@ -460,109 +507,180 @@ function ReviewerDashboard() {
                     </span>
                   )}
                 </div>
+
+                {/* Accordion Content */}
+                {expandedPaper === paper.id && (
+                  <div className="mt-6 bg-gray-50 rounded-xl p-6 border border-gray-200">
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="bg-blue-100 rounded-xl p-3">
+                        <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <h3 className="text-2xl font-bold text-gray-900">
+                          Update Paper Status
+                        </h3>
+                        <p className="text-sm text-gray-500 mt-0.5">Review and update the paper status</p>
+                      </div>
+                    </div>
+
+                    <div className="bg-blue-50 rounded-xl p-4 mb-6 border border-blue-100">
+                      <p className="text-sm text-gray-600 font-medium mb-1">Paper Title</p>
+                      <p className="text-sm text-gray-900 font-semibold">{paper.paperTitle}</p>
+                    </div>
+
+                    <form onSubmit={(e) => { e.preventDefault(); handleStatusUpdate(e); }}>
+                      <div className="mb-6">
+                        <label className="block text-sm font-bold text-gray-900 mb-3">
+                          Status *
+                        </label>
+                        <select
+                          value={reviewData[paper.id]?.status || ''}
+                          onChange={(e) => updateReviewData(paper.id, 'status', e.target.value)}
+                          className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm font-medium transition-all"
+                          required
+                        >
+                          <option value="">Select Status</option>
+                          <option value="under_review">Under Review</option>
+                          <option value="accepted">Accepted</option>
+                          <option value="accepted_with_minor_revision">Accepted with Minor Revision</option>
+                          <option value="accepted_with_major_revision">Accepted with Major Revision</option>
+                          <option value="rejected">Rejected</option>
+                        </select>
+                      </div>
+
+                      <div className="mb-6">
+                        <label className="block text-sm font-bold text-gray-900 mb-3">
+                          1.	Originality: Does the paper contain new and significant information adequate to justify publication?
+                        </label>
+                        <textarea
+                          value={reviewData[paper.id]?.q1 || ''}
+                          onChange={(e) => updateReviewData(paper.id, 'q1', e.target.value)}
+                          className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm resize-none transition-all"
+                          rows="3"
+                          placeholder="Provide your assessment of the paper's quality..."
+                        />
+                      </div>
+
+                      <div className="mb-6">
+                        <label className="block text-sm font-bold text-gray-900 mb-3">
+                           2.	Relationship to Literature: Does the paper demonstrate an adequate understanding of the relevant literature in the field and cite an appropriate range of literature sources.
+                        </label>
+                        <textarea
+                          value={reviewData[paper.id]?.q2 || ''}
+                          onChange={(e) => updateReviewData(paper.id, 'q2', e.target.value)}
+                          className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm resize-none transition-all"
+                          rows="3"
+                          placeholder="Discuss the relevance to the conference theme..."
+                        />
+                      </div>
+
+                      <div className="mb-6">
+                        <label className="block text-sm font-bold text-gray-900 mb-3">
+                          3. Methodology: Is the paper's argument built on an appropriate base of theory, concepts or other ideas? Has the research or equivalent intellectual work on which the paper is based been well designed? Are the methods employed appropriate?
+                        </label>
+                        <textarea
+                          value={reviewData[paper.id]?.q3 || ''}
+                          onChange={(e) => updateReviewData(paper.id, 'q3', e.target.value)}
+                          className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm resize-none transition-all"
+                          rows="3"
+                          placeholder="Highlight the key strengths..."
+                        />
+                      </div>
+
+                      <div className="mb-6">
+                        <label className="block text-sm font-bold text-gray-900 mb-3">
+                          4.	Results: Are results presented clearly and analysed appropriately? Do the conclusions adequately tie together the other elements of the paper?
+                        </label>
+                        <textarea
+                          value={reviewData[paper.id]?.q4 || ''}
+                          onChange={(e) => updateReviewData(paper.id, 'q4', e.target.value)}
+                          className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm resize-none transition-all"
+                          rows="3"
+                          placeholder="Identify areas for improvement..."
+                        />
+                      </div>
+
+                      <div className="mb-6">
+                        <label className="block text-sm font-bold text-gray-900 mb-3">
+                         5.	Does the paper clearly state implications for research, practice, and society? - Does it connect theory to real-world applications? - What's the potential impact on society (e.g., changing attitudes, improving lives)? Are these implications consistent with the findings and conclusions of the paper?
+                        </label>
+                        <textarea
+                          value={reviewData[paper.id]?.q5 || ''}
+                          onChange={(e) => updateReviewData(paper.id, 'q5', e.target.value)}
+                          className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm resize-none transition-all"
+                          rows="3"
+                          placeholder="Evaluate the technical content..."
+                        />
+                      </div>
+
+                      <div className="mb-6">
+                        <label className="block text-sm font-bold text-gray-900 mb-3">
+                         6.	Quality of Communication: - Is the paper clear and concise in its language and arguments? - Is technical language used appropriately for the journal's audience? - Is the writing readable, with minimal jargon and clear acronyms?
+                        </label>
+                        <textarea
+                          value={reviewData[paper.id]?.q6 || ''}
+                          onChange={(e) => updateReviewData(paper.id, 'q6', e.target.value)}
+                          className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm resize-none transition-all"
+                          rows="3"
+                          placeholder="Provide any additional feedback..."
+                        />
+                      </div>
+
+                      <div className="mb-8">
+                        <label className="block text-sm font-bold text-gray-900 mb-3">
+                          Overall Comments
+                        </label>
+                        <textarea
+                          value={reviewData[paper.id]?.comments || ''}
+                          onChange={(e) => updateReviewData(paper.id, 'comments', e.target.value)}
+                          className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm resize-none transition-all"
+                          rows="4"
+                          placeholder="Add your overall review comments..."
+                        />
+                      </div>
+
+                      <div className="flex justify-end space-x-3">
+                        <button
+                          type="button"
+                          onClick={() => setExpandedPaper(null)}
+                          className="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 font-semibold text-sm transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="submit"
+                          disabled={updating}
+                          className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl font-bold text-sm shadow-md transition-all duration-200 transform hover:scale-105 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 flex items-center gap-2"
+                        >
+                          {updating ? (
+                            <>
+                              <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                              Updating...
+                            </>
+                          ) : (
+                            <>
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              </svg>
+                              Update Status
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                )}
               </div>
             ))}
           </div>
         )}
 
-        {/* Status Update Modal */}
-        {selectedPaper && (
-          <div className="fixed inset-0 bg-gray-900 bg-opacity-60 backdrop-blur-sm overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
-            <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl transform transition-all">
-              <div className="p-8">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="bg-blue-100 rounded-xl p-3">
-                    <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h3 className="text-2xl font-bold text-gray-900">
-                      Update Paper Status
-                    </h3>
-                    <p className="text-sm text-gray-500 mt-0.5">Review and update the paper status</p>
-                  </div>
-                </div>
-                
-                <div className="bg-blue-50 rounded-xl p-4 mb-6 border border-blue-100">
-                  <p className="text-sm text-gray-600 font-medium mb-1">Paper Title</p>
-                  <p className="text-sm text-gray-900 font-semibold">{selectedPaper.paperTitle}</p>
-                </div>
 
-                <form onSubmit={handleStatusUpdate}>
-                  <div className="mb-6">
-                    <label className="block text-sm font-bold text-gray-900 mb-3">
-                      Status *
-                    </label>
-                    <select
-                      value={status}
-                      onChange={(e) => setStatus(e.target.value)}
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm font-medium transition-all"
-                      required
-                    >
-                      <option value="">Select Status</option>
-                      <option value="under_review">Under Review</option>
-                      <option value="accepted">Accepted</option>
-                      <option value="accepted_with_minor_revision">Accepted with Minor Revision</option>
-                      <option value="accepted_with_major_revision">Accepted with Major Revision</option>
-                      <option value="rejected">Rejected</option>
-                     
-                    </select>
-                  </div>
-
-                  <div className="mb-8">
-                    <label className="block text-sm font-bold text-gray-900 mb-3">
-                      Comments
-                    </label>
-                    <textarea
-                      value={comments}
-                      onChange={(e) => setComments(e.target.value)}
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm resize-none transition-all"
-                      rows="4"
-                      placeholder="Add your review comments..."
-                    />
-                  </div>
-
-                  <div className="flex justify-end space-x-3">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSelectedPaper(null);
-                        setStatus('');
-                        setComments('');
-                      }}
-                      className="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 font-semibold text-sm transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={updating}
-                      className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl font-bold text-sm shadow-md transition-all duration-200 transform hover:scale-105 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 flex items-center gap-2"
-                    >
-                      {updating ? (
-                        <>
-                          <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                          Updating...
-                        </>
-                      ) : (
-                        <>
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                          Update Status
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

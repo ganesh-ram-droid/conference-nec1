@@ -81,7 +81,7 @@ function PaperStatus() {
   }, [searchParams, login, navigate]);
 
   const getEffectiveStatus = (paper) => {
-    return paper.status;
+    return paper.notificationSent ? paper.status : "under_review";
   };
 
   const getStatusColor = (paper) => {
@@ -293,7 +293,7 @@ function PaperStatus() {
     .filter(paper => ["accepted", "accepted_with_minor_revision", "accepted_with_major_revision"].includes(paper.status))
     .reduce((latest, curr) => !latest || new Date(curr.createdAt) > new Date(latest.createdAt) ? curr : latest, null);
 
-  const canSubmitFinal = latestAcceptedPaper && latestAcceptedPaper.finalSubmissionStatus === "not_submitted";
+  const canSubmitFinal = latestAcceptedPaper && latestAcceptedPaper.notificationSent && latestAcceptedPaper.finalSubmissionStatus === "not_submitted";
 
   const showQuickActions = !!latestAcceptedPaper && !['submitted', '1', 1].includes(String(latestAcceptedPaper.finalSubmissionStatus));
 
@@ -377,6 +377,7 @@ function PaperStatus() {
                   <h3 className="font-bold text-gray-800 text-xl mb-1">
                     {user?.name || "User"}
                   </h3>
+                  <p className="text-gray-500 text-sm mb-2">ID: {user?.id || "N/A"}</p>
                   <p className="text-gray-500 text-sm mb-4">Conference Participant</p>
                   <button
                     onClick={() => {
@@ -693,7 +694,7 @@ function PaperStatus() {
                         </div>
                       </div>
                       
-                      {paper.reviews && paper.reviews.length > 0 && submission.type === 'initial' && (
+                      {paper.reviews && paper.reviews.length > 0 && submission.type === 'initial' && paper.notificationSent && (
                         <div className="bg-gradient-to-r from-amber-50 to-yellow-50 rounded-xl p-4 border border-amber-200 mt-4">
                           <div className="flex items-start mb-3">
                             <svg className="w-5 h-5 text-amber-600 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -701,7 +702,7 @@ function PaperStatus() {
                             </svg>
                             <p className="text-sm font-bold text-amber-900">Reviewer Comments</p>
                           </div>
-                          {paper.reviews.filter((review, index, self) => index === self.findIndex(r => r.comments === review.comments)).map((review, reviewIndex) => (
+                          {paper.reviews.map((review, reviewIndex) => (
                             <div key={reviewIndex} className="mb-3 last:mb-0">
                               <p className="text-sm text-gray-700 bg-white p-3 rounded-lg shadow-sm whitespace-pre-wrap border border-amber-100">
                                 <strong>Reviewer{reviewIndex + 1}:</strong> {review.comments || 'No comments provided'}
