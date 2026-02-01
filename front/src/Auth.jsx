@@ -99,7 +99,12 @@ const Auth = () => {
       }
     } catch (error) {
       console.error('Fetch error:', error);
-      showToast('Network error', 'error');
+      // Check if it's a JSON parsing error (HTML received instead of JSON)
+      if (error instanceof SyntaxError && error.message.includes('JSON')) {
+        showToast('Server error: Invalid response format', 'error');
+      } else {
+        showToast('Network error', 'error');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -180,6 +185,16 @@ const Auth = () => {
               {isLogin ? 'Sign Up' : 'Login'}
             </button>
           </p>
+          {isLogin && (
+            <p className="mt-2 text-center text-sm text-gray-600">
+              <button
+                onClick={() => navigate('/forgot-password')}
+                className="text-blue-500 hover:underline"
+              >
+                Forgot your password?
+              </button>
+            </p>
+          )}
           {toast.show && (
             <div
               className={`mt-4 p-3 rounded text-white text-center ${

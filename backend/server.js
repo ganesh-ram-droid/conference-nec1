@@ -177,6 +177,17 @@ app.use(cookieParser());
   app.use("/icodses/admin", adminRoutes);
   app.use("/icodses/visitors", visitorRoutes);
 
+  // Error handling middleware
+  app.use((err, req, res, next) => {
+    console.error('Error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  });
+
+  // 404 handler for API routes
+  app.use('/icodses/*', (req, res) => {
+    res.status(404).json({ error: 'API endpoint not found' });
+  });
+
   // Google OAuth
   app.get(
     "/icodses/auth/google",

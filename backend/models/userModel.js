@@ -10,6 +10,8 @@ export const userModel = (db) => {
         role ENUM('user', 'reviewer', 'admin') DEFAULT 'user',
         track VARCHAR(255),
         isFirstLogin TINYINT(1) DEFAULT 0,
+        resetToken VARCHAR(255) NULL,
+        resetTokenExpiry TIMESTAMP NULL,
         createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `;
@@ -18,7 +20,16 @@ export const userModel = (db) => {
         console.error("User table creation error:", err);
         return reject(err);
       }
-      resolve();
+
+      // Create indexes for users
+      const userIndexQueries = [
+        `CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);`,
+        `CREATE INDEX IF NOT EXISTS idx_users_track ON users(track);`
+      ];
+      let userPromises = userIndexQueries.map(q => new Promise((res, rej) => db.query(q, (err) => err ? rej(err) : res())));
+      Promise.all(userPromises).then(() => {
+        resolve();
+      }).catch(reject);
     });
   });
 };

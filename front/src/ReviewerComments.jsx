@@ -267,7 +267,8 @@ function ReviewerComments() {
       )}
 
       {paper && (
-        <div className="bg-white border rounded-lg shadow-sm p-6 space-y-6">
+       <div className="bg-white border rounded-lg shadow-sm p-6 space-y-6 overflow-hidden">
+
 
           {/* PAPER DETAILS */}
           <section>
@@ -298,7 +299,8 @@ function ReviewerComments() {
                     {r.reviewStatus || "Not reviewed"}
                   </span>
 
-                  <p className="mt-2 text-sm whitespace-pre-wrap">
+                 <p className="mt-2 text-sm whitespace-pre-wrap break-words break-all overflow-hidden">
+
                     {r.comments || "No comments"}
                   </p>
 
@@ -310,7 +312,11 @@ function ReviewerComments() {
                       </p>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                         {Object.entries(r.questions).map(([k, v]) => (
-                          <div key={k} className="bg-white border rounded p-2 text-sm">
+                        <div
+  key={k}
+  className="bg-white border rounded p-2 text-sm break-words break-all overflow-hidden"
+>
+
                             <b>{k.toUpperCase()}:</b> {v || "Not answered"}
                           </div>
                         ))}

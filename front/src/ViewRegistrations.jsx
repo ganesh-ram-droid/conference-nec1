@@ -870,44 +870,51 @@ function ViewRegistrations({
 
             {/* Pagination controls (outside the scrollable table container so they never scroll horizontally) */}
             <div className="flex items-center justify-between px-4 py-3 border-t bg-white">
-              <div className="text-sm text-gray-600">
-                Showing {(page - 1) * PAGE_SIZE + 1} - {Math.min(page * PAGE_SIZE, filteredRegistrations.length)} of {filteredRegistrations.length}
-              </div>
-              <div className="flex items-center space-x-2">
-                <button
-                  onClick={() => setPage(p => Math.max(1, p - 1))}
-                  disabled={page === 1}
-                  className={`px-3 py-1 rounded-md text-sm ${page === 1 ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-white border hover:bg-gray-50'}`}
-                >
-                  Prev
-                </button>
+  <div className="text-sm text-gray-600">
+    Showing {(page - 1) * PAGE_SIZE + 1} - {Math.min(page * PAGE_SIZE, filteredRegistrations.length)} of {filteredRegistrations.length}
+  </div>
 
-                {/* page numbers */}
-                <div className="flex items-center space-x-1">
-                  {Array.from({ length: totalPages }).map((_, i) => {
-                    const pageNumber = i + 1;
-                    const isActive = pageNumber === page;
-                    return (
-                      <button
-                        key={pageNumber}
-                        onClick={() => setPage(pageNumber)}
-                        className={`px-3 py-1 rounded-md text-sm ${isActive ? 'bg-blue-600 text-white' : 'bg-white border hover:bg-gray-50'}`}
-                      >
-                        {pageNumber}
-                      </button>
-                    );
-                  })}
-                </div>
+  <div className="flex items-center gap-2 flex-wrap">
+    <button
+      onClick={() => setPage(p => Math.max(1, p - 1))}
+      disabled={page === 1}
+      className={`px-3 py-1 rounded-md text-sm ${
+        page === 1 ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-white border hover:bg-gray-50'
+      }`}
+    >
+      Prev
+    </button>
 
-                <button
-                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                  disabled={page === totalPages}
-                  className={`px-3 py-1 rounded-md text-sm ${page === totalPages ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-white border hover:bg-gray-50'}`}
-                >
-                  Next
-                </button>
-              </div>
-            </div>
+    <div className="flex flex-wrap gap-1 max-w-full">
+      {Array.from({ length: totalPages }).map((_, i) => {
+        const pageNumber = i + 1;
+        return (
+          <button
+            key={pageNumber}
+            onClick={() => setPage(pageNumber)}
+            className={`px-3 py-1 rounded-md text-sm ${
+              page === pageNumber
+                ? 'bg-blue-600 text-white'
+                : 'bg-white border hover:bg-gray-50'
+            }`}
+          >
+            {pageNumber}
+          </button>
+        );
+      })}
+    </div>
+
+    <button
+      onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+      disabled={page === totalPages}
+      className={`px-3 py-1 rounded-md text-sm ${
+        page === totalPages ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-white border hover:bg-gray-50'
+      }`}
+    >
+      Next
+    </button>
+  </div>
+</div>
 
             {/* Native horizontal scrollbar is used; removed custom fake scrollbar to avoid duplication */}
           </>

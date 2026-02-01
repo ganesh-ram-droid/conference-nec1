@@ -62,7 +62,10 @@ function ReviewerDashboard() {
     e.preventDefault();
     const paperId = expandedPaper;
     const data = reviewData[paperId];
-    if (!paperId || !data.status) return;
+    if (!paperId || !data.status) {
+      alert('Please select a status before updating.');
+      return;
+    }
 
     setUpdating(true);
     try {

@@ -29,12 +29,22 @@ function PaperStatus() {
         },
       });
 
-      const data = await res.json();
-      if (res.ok && Array.isArray(data)) {
-        setPapers(data);
+      if (res.ok) {
+        try {
+          const data = await res.json();
+          if (Array.isArray(data)) {
+            setPapers(data);
+          } else {
+            setPapers([]);
+            console.warn("Invalid data format");
+          }
+        } catch (jsonErr) {
+          setPapers([]);
+          console.warn("Failed to parse JSON:", jsonErr);
+        }
       } else {
         setPapers([]);
-        console.warn("Failed to fetch paper status:", data);
+        console.warn("Failed to fetch paper status:", res.status, res.statusText);
       }
     } catch (err) {
       console.error("Error fetching paper status:", err);
@@ -348,9 +358,58 @@ function PaperStatus() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
-      {/* <Header /> */}
+      {/* Mobile Header */}
+    <div className="lg:hidden bg-white shadow-sm border-b border-gray-200 px-4 py-3">
+  <div className="flex items-center justify-between gap-3">
+    
+    {/* User Info */}
+    <div className="flex items-center space-x-3 min-w-0">
+      <div className="bg-gradient-to-br from-blue-600 to-indigo-700 w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0">
+        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+          />
+        </svg>
+      </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-28">
+      <p className="text-sm font-semibold text-gray-800 truncate">
+        {user?.name || "User"}
+      </p>
+    </div>
+
+    {/* Logout Button */}
+    <button
+      onClick={() => {
+        logout();
+        navigate("/auth");
+      }}
+      className="flex-shrink-0 inline-flex items-center px-3 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg shadow"
+    >
+      Logout
+    </button>
+  </div>
+</div>
+
+{/* Mobile Profile Card */}
+<div className="lg:hidden px-4 mt-4">
+  <div className="bg-white rounded-xl shadow border p-4 flex items-center justify-between">
+    <div>
+      <p className="font-semibold text-gray-800">{user?.name}</p>
+      <p className="text-sm text-gray-500">Conference Participant</p>
+    </div>
+    <button
+      onClick={() => {
+        logout();
+        navigate("/auth");
+      }}
+      className="px-4 py-2 bg-red-600 text-white text-sm rounded-lg"
+    >
+      Logout
+    </button>
+  </div>
+</div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 lg:py-28">
         <div className="flex gap-8">
           <div className="hidden lg:block w-80 flex-shrink-0">
             <div className="sticky top-8 space-y-6">
@@ -377,7 +436,7 @@ function PaperStatus() {
                   <h3 className="font-bold text-gray-800 text-xl mb-1">
                     {user?.name || "User"}
                   </h3>
-                  <p className="text-gray-500 text-sm mb-2">ID: {user?.id || "N/A"}</p>
+                  
                   <p className="text-gray-500 text-sm mb-4">Conference Participant</p>
                   <button
                     onClick={() => {
@@ -704,7 +763,12 @@ function PaperStatus() {
                           </div>
                           {paper.reviews.map((review, reviewIndex) => (
                             <div key={reviewIndex} className="mb-3 last:mb-0">
-                              <p className="text-sm text-gray-700 bg-white p-3 rounded-lg shadow-sm whitespace-pre-wrap border border-amber-100">
+                             <p className="
+  text-sm text-gray-700 bg-white p-3 rounded-lg shadow-sm
+  whitespace-pre-wrap break-words break-all overflow-hidden
+  border border-amber-100
+">
+
                                 <strong>Reviewer{reviewIndex + 1}:</strong> {review.comments || 'No comments provided'}
                               </p>
                             </div>

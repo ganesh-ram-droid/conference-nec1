@@ -16,12 +16,15 @@ import PasswordChange from './PasswordChange.jsx'
 import ResourceNotFound from './ResourceNotFound.jsx'
 import Auth from './Auth.jsx'
 import { AuthProvider } from './AuthContext.jsx'
+import { FontStyleProvider } from './context/FontStyleContext.jsx'
 import ReviewerDashboard from './ReviewerDashboard.jsx'
 import PaperStatus from './PaperStatus.jsx'
 import  RegistrationTable from './Fees.jsx'
 import ResearchTracks from './ResearchTracks.jsx'
 import ProgramCommittee from './ProgramCommitte.jsx'
 import Layout from './Layout.jsx'
+import ForgotPassword from './ForgotPassword.jsx'
+import ResetPassword from './ResetPassword.jsx'
 
 // Root component that includes ScrollToTop
 function Root() {
@@ -41,6 +44,7 @@ const router = createBrowserRouter(
       children: [
         { index: true, element: <App /> },
         { path: 'auth', element: <Auth /> },
+        { path: 'forgot-password', element: <ForgotPassword /> },
               { path: 'dates', element: <Dates /> },
         { path: 'tracks', element: <ResearchTracks />  },
         { path: 'committee', element: <Committee /> },
@@ -53,6 +57,7 @@ const router = createBrowserRouter(
         { path: 'reviewer-dashboard', element: <ReviewerDashboard /> },
         { path: 'paper-status', element: <PaperStatus /> },
         { path: 'change-password', element: <PasswordChange /> },
+        { path: 'reset-password/:token', element: <ResetPassword /> },
         { path: 'fees', element: <RegistrationTable /> }
       ]
 
@@ -75,7 +80,9 @@ const router = createBrowserRouter(
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <AuthProvider>
-      <RouterProvider router={router} />
+      <FontStyleProvider>
+        <RouterProvider router={router} />
+      </FontStyleProvider>
     </AuthProvider>
   </StrictMode>
 )

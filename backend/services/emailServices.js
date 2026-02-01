@@ -487,3 +487,72 @@ export const sendAdminPaperNotificationEmail = async (paperId, paperTitle, autho
     throw error;
   }
 };
+
+export const sendPasswordResetEmail = async (email, name, resetToken) => {
+  // Check if email credentials are configured
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    console.error('Email credentials not configured. Please set EMAIL_USER and EMAIL_PASS in .env file');
+    throw new Error('Email service not configured');
+  }
+
+  const transporter = nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    port: 587,
+    secure: false,
+    service: "Gmail",
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS
+    }
+  });
+
+  const resetLink = `https://nec.edu.in/ICoDSES/reset-password/${resetToken}`;
+
+  const mailOptions = {
+    from: `"NEC Conference" <${process.env.EMAIL_USER}>`,
+    to: email,
+    subject: "Password Reset - NEC Conference",
+    html: `
+      <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto;">
+        <div style="background-color: #2E86C1; color: white; padding: 20px; text-align: center; border-radius: 5px 5px 0 0;">
+          <h1 style="margin: 0;">NEC Conference</h1>
+          <p style="margin: 5px 0 0 0;">Password Reset Request</p>
+        </div>
+
+        <div style="background-color: #f8f9fa; padding: 20px; border-radius: 0 0 5px 5px;">
+          <h2 style="color: #2E86C1; margin-top: 0;">Hello ${name},</h2>
+
+          <p>You have requested to reset your password for your NEC Conference account. Click the button below to reset your password:</p>
+
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${resetLink}" style="background-color: #2E86C1; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">
+              Reset Password
+            </a>
+          </div>
+
+          <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <h3 style="color: #856404; margin-top: 0;">⚠️ Important Security Notice</h3>
+            <p style="margin-bottom: 0; color: #856404;">
+              This link will expire in 1 hour for your security. If you did not request this password reset, please ignore this email.
+            </p>
+          </div>
+
+          <p>If the button doesn't work, you can copy and paste this link into your browser:</p>
+          <p style="word-break: break-all; background-color: #e9ecef; padding: 10px; border-radius: 3px; font-family: monospace;">${resetLink}</p>
+
+          <p>If you have any questions, please contact the conference administrators.</p>
+
+          <p>Best regards,<br><strong>NEC Conference Team</strong></p>
+        </div>
+      </div>
+    `
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log(`Password reset email sent successfully to ${email}`);
+  } catch (error) {
+    console.error(`Failed to send password reset email to ${email}:`, error.message);
+    throw error;
+  }
+};

@@ -68,7 +68,7 @@ function Admin() {
           }
         });
         const data = await res.json();
-        console.log("API Response:", res.status, res.ok, data);
+        console.log("API Response:", res.status, res.ok, data.length);
         if (res.ok && Array.isArray(data)) {
           setRegistrations(data);
           console.log("Registrations loaded:", data.length);

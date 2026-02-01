@@ -127,8 +127,8 @@ export const changePassword = async (req, res) => {
     return res.status(400).json({ error: 'Current password and new password are required' });
   }
 
-  if (newPassword.length < 6) {
-    return res.status(400).json({ error: 'New password must be at least 6 characters long' });
+  if (newPassword.length < 8) {
+    return res.status(400).json({ error: 'New password must be at least 8 characters long' });
   }
 
   try {
@@ -183,6 +183,115 @@ export const changePassword = async (req, res) => {
     });
   } catch (error) {
     console.error('Change password error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+export const forgotPassword = async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ error: 'Email is required' });
+  }
+
+  try {
+    // Check if user exists
+    const query = 'SELECT id, name FROM users WHERE email = ?';
+    db.query(query, [email], async (err, results) => {
+      if (err) {
+        console.error('DB error:', err);
+        return res.status(500).json({ error: 'Database error' });
+      }
+
+      if (results.length === 0) {
+        // Don't reveal if email exists or not for security
+        return res.json({ message: 'If an account with that email exists, a password reset link has been sent.' });
+      }
+
+      const user = results[0];
+
+      // Generate secure reset token
+      const crypto = await import('crypto');
+      const resetToken = crypto.randomBytes(32).toString('hex');
+
+      // Set expiry to 1 hour from now
+      const resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+      // Save token to database
+      const updateQuery = 'UPDATE users SET resetToken = ?, resetTokenExpiry = ? WHERE id = ?';
+      db.query(updateQuery, [resetToken, resetTokenExpiry, user.id], async (err, result) => {
+        if (err) {
+          console.error('DB update error:', err);
+          return res.status(500).json({ error: 'Database error' });
+        }
+
+        // Send reset email
+        try {
+          const { sendPasswordResetEmail } = await import('../services/emailServices.js');
+          await sendPasswordResetEmail(email, user.name, resetToken);
+          res.json({ message: 'If an account with that email exists, a password reset link has been sent.' });
+        } catch (emailError) {
+          console.error('Email error:', emailError);
+          // Clear the token if email fails
+          const clearQuery = 'UPDATE users SET resetToken = NULL, resetTokenExpiry = NULL WHERE id = ?';
+          db.query(clearQuery, [user.id]);
+          res.status(500).json({ error: 'Failed to send reset email' });
+        }
+      });
+    });
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+export const resetPassword = async (req, res) => {
+  const { token, newPassword } = req.body;
+
+  if (!token || !newPassword) {
+    return res.status(400).json({ error: 'Token and new password are required' });
+  }
+
+  if (newPassword.length < 8) {
+    return res.status(400).json({ error: 'New password must be at least 8 characters long' });
+  }
+
+  try {
+    // Find user with valid reset token
+    const query = 'SELECT id, name, email, resetTokenExpiry FROM users WHERE resetToken = ?';
+    db.query(query, [token], async (err, results) => {
+      if (err) {
+        console.error('DB error:', err);
+        return res.status(500).json({ error: 'Database error' });
+      }
+
+      if (results.length === 0) {
+        return res.status(400).json({ error: 'Invalid or expired reset token' });
+      }
+
+      const user = results[0];
+
+      // Check if token is expired
+      if (!user.resetTokenExpiry || new Date(user.resetTokenExpiry) < new Date()) {
+        return res.status(400).json({ error: 'Reset token has expired' });
+      }
+
+      // Hash new password
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+      // Update password and clear reset token, also reset isFirstLogin
+      const updateQuery = 'UPDATE users SET password = ?, resetToken = NULL, resetTokenExpiry = NULL, isFirstLogin = 0 WHERE id = ?';
+      db.query(updateQuery, [hashedPassword, user.id], (err, result) => {
+        if (err) {
+          console.error('DB update error:', err);
+          return res.status(500).json({ error: 'Database error' });
+        }
+
+        res.json({ message: 'Password has been reset successfully' });
+      });
+    });
+  } catch (error) {
+    console.error('Reset password error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 };
