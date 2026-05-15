@@ -268,7 +268,7 @@ const ResearchTracks = () => {
                   <div className="p-4 sm:p-6 md:p-8">
                     <h4 className="text-base sm:text-lg md:text-xl font-bold text-blue-800 mb-4 sm:mb-6 flex items-center gap-2 sm:gap-3">
                       <LightbulbIcon />
-                      Research Areas
+                      Research Area
                     </h4>
                     <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 sm:gap-4">
                       {track.topics.map((topic, topicIndex) => (

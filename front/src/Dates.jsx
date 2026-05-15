@@ -153,7 +153,7 @@ const Dates = () => {
                     <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl p-5 shadow-lg hover:shadow-xl transition-all duration-300">
                       <div className="flex items-center justify-center mb-3">
                         <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
-                        <span className="text-gray-700 text-sm font-bold uppercase tracking-widest">Indexing Details</span>
+                        <span className="text-gray-700 text-sm font-bold uppercase tracking-widest">Indexing Detail</span>
                       </div>
                       <p className="text-green-700 font-bold text-xl tracking-wide">
                         {pub.details}
