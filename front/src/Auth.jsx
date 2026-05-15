@@ -3,26 +3,32 @@ import { useNavigate } from 'react-router-dom';
 import { AuthContext } from './AuthContext';
 import Header from './Header.jsx';
 import Footer from './Footer.jsx';
-
 const Auth = () => {
-  const { login } = useContext(AuthContext);
-  const navigate = useNavigate();
+    const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
+  const { login } = useContext(AuthContext);
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: ''
   });
   const [errors, setErrors] = useState({});
-  const [toast, setToast] = useState({ show: false, message: '', type: '' });
-  const [isLoading, setIsLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [toast, setToast] = useState({ show: false, message: '', type: '' });
+
 
   const toggleForm = () => {
     setIsLogin(!isLogin);
     setFormData({ name: '', email: '', password: '' });
     setErrors({});
   };
+    const showToast = (message, type = 'success') => {
+    setToast({ show: true, message, type });
+    setTimeout(() => setToast({ show: false, message: '', type: '' }), 3000);
+  };
+
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -30,10 +36,6 @@ const Auth = () => {
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
   };
 
-  const showToast = (message, type = 'success') => {
-    setToast({ show: true, message, type });
-    setTimeout(() => setToast({ show: false, message: '', type: '' }), 3000);
-  };
 
   const validate = () => {
     let newErrors = {};
@@ -111,6 +113,10 @@ const Auth = () => {
   };
 
   return (
+    
+
+
+
     <div className="flex flex-col pt-22 min-h-screen">
       <main className="flex-grow py-8 px-4">
        
