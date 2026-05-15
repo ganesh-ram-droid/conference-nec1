@@ -615,7 +615,7 @@ function PaperStatus() {
                 </h3>
                 <p className="text-gray-600 text-lg mb-8 max-w-md mx-auto">
                   Get started by submitting your first research paper. Join our
-                  academic community today!
+                  academic community today
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
                   <button
