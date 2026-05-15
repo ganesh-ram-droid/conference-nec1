@@ -8,12 +8,16 @@ import ReviewerComments from "./ReviewerComments";
 
 const  API_URL = "https://nec.edu.in/icodses/admin/registrations-with-assignments";
 const CREATE_REVIEWER_URL = "https://nec.edu.in/icodses/admin/create-reviewer";
-const GET_REVIEWERS_URL = "https://nec.edu.in/icodses/admin/reviewers-with-assignments";
-const ASSIGN_REVIEWER_URL = "https://nec.edu.in/icodses/admin/assign-reviewer";
+
+
+
+
 const DELETE_REVIEWER_URL = "https://nec.edu.in/icodses/admin/delete-reviewer";
 const UPDATE_REVIEWER_URL = "https://nec.edu.in/icodses/admin/update-reviewer";
 const GET_UNASSIGNED_PAPERS_URL = "https://nec.edu.in/icodses/admin/unassigned-papers";
 const ANALYTICS_URL = "https://nec.edu.in/icodses/admin/registration-analytics";
+const GET_REVIEWERS_URL = "https://nec.edu.in/icodses/admin/reviewers-with-assignments";
+const ASSIGN_REVIEWER_URL = "https://nec.edu.in/icodses/admin/assign-reviewer";
 
 function Admin() {
   const { logout, user } = useContext(AuthContext);
@@ -25,12 +29,13 @@ function Admin() {
   const [reviewerForm, setReviewerForm] = useState({ name: '', email: '', track: '' });
   const [creatingReviewer, setCreatingReviewer] = useState(false);
   const [assignments, setAssignments] = useState({});
-  const [activeSection, setActiveSection] = useState('dashboard');
-  const [registrationFilters, setRegistrationFilters] = useState({ fromDate: '', toDate: '', selectedTracks: [] });
-  const [reviewerFilters, setReviewerFilters] = useState({ track: '' });
+   const [reviewerFilters, setReviewerFilters] = useState({ track: '' });
   const [deletingReviewer, setDeletingReviewer] = useState(null);
   const [updatingReviewer, setUpdatingReviewer] = useState(null);
   const [updatingReviewerLoading, setUpdatingReviewerLoading] = useState(false);
+  const [activeSection, setActiveSection] = useState('dashboard');
+  const [registrationFilters, setRegistrationFilters] = useState({ fromDate: '', toDate: '', selectedTracks: [] });
+ 
   const [updateForm, setUpdateForm] = useState({ name: '', email: '', track: '' });
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [analyticsData, setAnalyticsData] = useState({ countries: [], states: [] });
@@ -72,11 +77,16 @@ function Admin() {
         if (res.ok && Array.isArray(data)) {
           setRegistrations(data);
           console.log("Registrations loaded:", data.length);
+        
+        
+        
         } else {
           setRegistrations([]);
           console.warn("Failed to fetch registrations:", data);
         }
-      } catch (err) {
+      }
+      
+      catch (err) {
         console.error("Error fetching data:", err);
         setRegistrations([]);
       } finally {
@@ -138,6 +148,7 @@ function Admin() {
         console.error("Error fetching analytics:", err);
         setAnalyticsData({ countries: [], states: [] });
       }
+
     };
     fetchAnalytics();
   }, [refreshTrigger]);
@@ -188,6 +199,9 @@ function Admin() {
         : prev.selectedTracks.filter(t => t !== track)
     }));
   };
+
+
+
 
   const handleReviewerFilterChange = (e) => {
     const { name, value } = e.target;
@@ -253,24 +267,29 @@ function Admin() {
     setUpdateForm({ name: '', email: '', track: '' });
   };
 
+
   const clearFilters = () => {
     setRegistrationFilters({ fromDate: '', toDate: '', selectedTracks: [] });
   };
 
+
   const clearReviewerFilters = () => {
     setReviewerFilters({ track: '' });
   };
+
 
   const refreshData = () => {
     setLoading(true);
     setRefreshTrigger(prev => prev + 1);
   };
 
+
   const handleCreateReviewer = async () => {
     if (!reviewerForm.name || !reviewerForm.email || !reviewerForm.track) {
       alert('Please fill in all fields including track selection');
       return;
     }
+
 
     setCreatingReviewer(true);
     try {
@@ -281,6 +300,7 @@ function Admin() {
         password: '12345678', // Default password
         track: reviewerForm.track
       };
+
 
       const res = await fetch(CREATE_REVIEWER_URL, {
         method: 'POST',
@@ -312,6 +332,7 @@ function Admin() {
     }
   };
 
+
   const handleDeleteReviewer = async (reviewerId) => {
     if (!window.confirm('Are you sure you want to delete this reviewer? This action cannot be undone.')) {
       return;
@@ -341,6 +362,7 @@ function Admin() {
       setDeletingReviewer(null);
     }
   };
+
 
   const handleLogout = () => {
     logout();
@@ -379,6 +401,7 @@ function Admin() {
       }
     }
 
+
     // If authors is an object, try to extract meaningful data
     if (typeof authors === 'object' && authors !== null) {
       if (authors.name) return authors.name;
@@ -388,6 +411,7 @@ function Admin() {
 
     return 'No authors';
   };
+
 
   // Helper function to format abstract
   const formatAbstract = (abstract) => {
@@ -407,6 +431,7 @@ function Admin() {
     return null;
   }
 
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
       <div className="bg-blue-800 text-white p-4">
@@ -423,6 +448,7 @@ function Admin() {
           </div>
         </div>
       </div>
+
 
       <div className="flex flex-1">
         <div className="w-64 bg-white shadow-lg">
@@ -480,6 +506,7 @@ function Admin() {
           </nav>
         </div>
 
+
         <div className="flex-1 p-6">
           {activeSection === 'dashboard' && (
             <div>
@@ -500,6 +527,7 @@ function Admin() {
               </div>
             </div>
           )}
+
 
           {activeSection === 'reviewers' && (
             <div>
@@ -553,6 +581,7 @@ function Admin() {
                 </p>
               </div>
 
+
               <div className="bg-white rounded-lg shadow-sm border border-blue-200 p-6 mb-6">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
                   <h3 className="text-lg font-semibold text-blue-700 mb-2 sm:mb-0">Filter Reviewers by Track</h3>
@@ -582,6 +611,7 @@ function Admin() {
                   </p>
                 )}
               </div>
+
 
               <div className="bg-white rounded-lg shadow-sm border border-blue-200 p-6">
                 <h3 className="text-lg font-semibold text-blue-700 mb-4">Existing Reviewers</h3>
@@ -636,6 +666,7 @@ function Admin() {
                   </div>
                 )}
               </div>
+
 
               {updatingReviewer && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -693,6 +724,7 @@ function Admin() {
             </div>
           )}
 
+
           {activeSection === 'registrations' && (
             <ViewRegistrations
               registrations={registrations}
@@ -709,6 +741,7 @@ function Admin() {
             />
           )}
 
+
           {activeSection === 'assignments' && (
             <AssignReviewer
               registrations={registrations}
@@ -724,6 +757,7 @@ function Admin() {
             />
           )}
 
+
           {activeSection === 'reviewer-comments' && (
             <ReviewerComments
               registrations={registrations}
@@ -735,5 +769,6 @@ function Admin() {
     </div>
   );
 }
+
 
 export default Admin;
