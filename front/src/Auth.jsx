@@ -206,8 +206,7 @@ const Auth = () => {
           )}
         </div>
       </main>
-     
-    </div>
+         </div>
   );
 };
 
