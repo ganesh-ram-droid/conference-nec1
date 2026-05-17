@@ -16,10 +16,12 @@ export const userModel = (db) => {
       )
     `;
     db.query(createQuery, (err) => {
+      
       if (err) {
         console.error("User table creation error:", err);
         return reject(err);
       }
+
 
       // Create indexes for users
       const userIndexQueries = [

@@ -30,6 +30,7 @@ const RegistrationTable = () => {
       {/* Animated Background Elements */}
       <div className="max-w-7xl mx-auto py-5 relative z-10 px-4">
         
+
        {/* Paper Submission Guidelines Section */}
         <div className=" pt-24 ">
           <div className="bg-white/95 rounded-xl sm:rounded-2xl lg:rounded-3xl p-4 sm:p-6 md:p-8 lg:p-10 shadow-2xl border border-sky-200/50 relative overflow-hidden">
@@ -38,7 +39,7 @@ const RegistrationTable = () => {
             <div className="relative z-10">
               <div className="text-center mb-6 sm:mb-8">
                 <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-sky-400 mb-3 sm:mb-4">
-                  Paper Submission Guidelines
+                     Paper Submission Guidelines
                 </h2>
                 <div className="flex justify-center mb-3 sm:mb-4">
                   <div className="w-16 sm:w-20 md:w-24 lg:w-32 h-1.5 sm:h-2 bg-gradient-to-r from-sky-400 via-[#3aa3d9] to-[#2086ca] rounded-full shadow-lg"></div>

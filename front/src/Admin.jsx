@@ -19,6 +19,7 @@ const ANALYTICS_URL = "https://nec.edu.in/icodses/admin/registration-analytics";
 const GET_REVIEWERS_URL = "https://nec.edu.in/icodses/admin/reviewers-with-assignments";
 const ASSIGN_REVIEWER_URL = "https://nec.edu.in/icodses/admin/assign-reviewer";
 
+
 function Admin() {
   const { logout, user } = useContext(AuthContext);
   const navigate = useNavigate();
@@ -40,6 +41,7 @@ function Admin() {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [analyticsData, setAnalyticsData] = useState({ countries: [], states: [] });
 
+
   // Calculate analytics data
   const papersWithAbstracts = registrations.filter(reg => reg.abstract && reg.abstract.trim() !== '').length;
   const recentSubmissions = registrations.filter(reg => {
@@ -49,6 +51,7 @@ function Admin() {
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     return submissionDate >= sevenDaysAgo;
   }).length;
+
 
   useEffect(() => {
     if (!user || user.role !== 'admin') {
@@ -153,6 +156,7 @@ function Admin() {
     fetchAnalytics();
   }, [refreshTrigger]);
 
+  
   useEffect(() => {
     const fetchTotalRegistrations = async () => {
       try {

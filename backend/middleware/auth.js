@@ -8,6 +8,7 @@ const JWT_SECRET = process.env.JWT_SECRET;
 // console.log('JWT_SECRET used in auth middleware:', JWT_SECRET);
 
 
+
 const rateLimitStore = new Map();
 
 export const apiRateLimiter = (req, res, next) => {
@@ -16,12 +17,14 @@ export const apiRateLimiter = (req, res, next) => {
   const windowMs = 15 * 60 * 2000; 
   const maxRequests = 5000;
 
+
   if (!rateLimitStore.has(ip)) {
     rateLimitStore.set(ip, []);
   }
 
   const requests = rateLimitStore.get(ip);
  
+
   const validRequests = requests.filter(time => now - time < windowMs);
   rateLimitStore.set(ip, validRequests);
 
@@ -29,13 +32,16 @@ export const apiRateLimiter = (req, res, next) => {
     return res.status(429).json({ error: 'Too many requests from this IP, please try again later.' });
   }
 
+
   validRequests.push(now);
   next();
 };
 
+
 export const authenticateToken = (req, res, next) => {
 	const authHeader = req.headers['authorization'];
 	const token = authHeader?.split(' ')[1];
+  
 
   console.log('Authorization header:', authHeader);
   console.log('Token extracted:', token);
@@ -50,5 +56,6 @@ export const authenticateToken = (req, res, next) => {
     console.log('Decoded user from token:', user);
     req.user = user;
     next();
+    
   });
 };

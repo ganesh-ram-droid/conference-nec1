@@ -37,10 +37,15 @@ import { authenticateToken } from "../middleware/auth.js";
 
 const router = express.Router();
 
+
 // Admin routes
+
 router.post("/create-reviewer", authenticateToken, createReviewer);
+
 router.get("/reviewers", authenticateToken, getReviewers);
+
 router.post("/assign-reviewer", authenticateToken, assignReviewer);
+
 router.get("/reviewers-with-assignments", authenticateToken, getReviewersWithAssignments);
 router.put("/update-reviewer/:id", authenticateToken, updateReviewer);
 router.delete("/delete-reviewer/:id", authenticateToken, deleteReviewer);
@@ -55,26 +60,35 @@ router.put("/registrations/:id/status", authenticateToken, updateRegistrationSta
 
 // Assignment management (admin)
 router.get("/assignments", authenticateToken, getAllAssignments);
+
 router.delete("/assignment/:paperId/:reviewerId", authenticateToken, deleteAssignment);
+
 router.put("/assignment/:paperId/:reviewerId", authenticateToken, updateAssignment);
 
 // Reviewer routes
 router.get("/reviewer/assigned-papers", authenticateToken, getAssignedPapers);
+
 router.post("/reviewer/update-status", authenticateToken, updatePaperStatus);
+
 
 // User routes
 router.get("/paper-status/:userId", authenticateToken, getPaperStatus);
 
+
 // Total registrations route
 router.get("/total-registrations", authenticateToken, getTotalRegistrations);
+
 
 // Download final paper
 router.get("/download-final-paper/:paperId", authenticateToken, downloadFinalPaper);
 
+
 // Reset final submission
 router.put("/registrations/:id/reset-final-submission", authenticateToken, resetFinalSubmission);
 
+
 // Get paper with reviewer comments
 router.get("/paper-with-comments/:paperId", authenticateToken, getPaperWithReviewerComments);
+
 
 export default router;

@@ -10,6 +10,7 @@ export const sendFinalSubmissionConfirmationEmail = async (email, name, paperTit
     throw new Error('Email service not configured');
   }
 
+
   const transporter = nodemailer.createTransport({
     host: "smtp.gmail.com",
     port: 587,
@@ -21,6 +22,7 @@ export const sendFinalSubmissionConfirmationEmail = async (email, name, paperTit
     }
   });
 
+  
   const mailOptions = {
     from: `"NEC Conference Admin" <${process.env.EMAIL_USER}>`,
     to: email,

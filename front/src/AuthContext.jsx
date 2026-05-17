@@ -20,6 +20,8 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+
+  
   useEffect(() => {
     if (token) {
       try {
