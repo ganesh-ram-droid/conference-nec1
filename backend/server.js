@@ -61,7 +61,7 @@ app.use(cookieParser());
   // CORS
   app.use(
     cors({
-      origin: ["https://www.nec.edu.in","https://nec.edu.in"],
+      origin: ["https://www.nec.edu.in","https://nec.edu.in","http://localhost:5173/"],
       credentials: true,
     })
   );

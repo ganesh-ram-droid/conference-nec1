@@ -14,10 +14,10 @@ const Auth = () => {
     password: ''
   });
   const [errors, setErrors] = useState({});
+
+  const [toast, setToast] = useState({ show: false, message: '', type: '' });
     const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [toast, setToast] = useState({ show: false, message: '', type: '' });
-
 
   const toggleForm = () => {
     setIsLogin(!isLogin);

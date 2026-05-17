@@ -3,17 +3,17 @@ import dotenv from 'dotenv';
 dotenv.config();
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'necadmin';
+const JWT_SECRET = process.env.JWT_SECRET;
 
-console.log('JWT_SECRET used in auth middleware:', JWT_SECRET);
+// console.log('JWT_SECRET used in auth middleware:', JWT_SECRET);
 
-// Simple in-memory rate limiter
+
 const rateLimitStore = new Map();
 
 export const apiRateLimiter = (req, res, next) => {
   const ip = req.ip || req.connection.remoteAddress;
   const now = Date.now();
-  const windowMs = 15 * 60 * 1000; // 15 minutes
+  const windowMs = 15 * 60 * 2000; 
   const maxRequests = 5000;
 
   if (!rateLimitStore.has(ip)) {
@@ -21,7 +21,7 @@ export const apiRateLimiter = (req, res, next) => {
   }
 
   const requests = rateLimitStore.get(ip);
-  // Remove old requests outside the window
+ 
   const validRequests = requests.filter(time => now - time < windowMs);
   rateLimitStore.set(ip, validRequests);
 
