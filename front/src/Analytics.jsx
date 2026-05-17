@@ -11,13 +11,12 @@ function Analytics({ registrations, analyticsData }) {
     weekAgo.setDate(weekAgo.getDate() - 7);
     return regDate > weekAgo;
   }).length;
-
-  // Enhanced color palette with better contrast and modern colors
   const COLORS = [
     '#3B82F6', '#10B981', '#F59E0B', '#EF4444', 
     '#8B5CF6', '#06B6D4', '#84CC16', '#F97316',
     '#EC4899', '#6366F1', '#14B8A6', '#F59E0B'
   ];
+
 
   // Custom tooltip component
   const CustomTooltip = ({ active, payload, label }) => {
@@ -37,6 +36,8 @@ function Analytics({ registrations, analyticsData }) {
     }
     return null;
   };
+
+
 
   // Enhanced label rendering function
   const renderCustomLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, name }) => {
@@ -62,13 +63,11 @@ function Analytics({ registrations, analyticsData }) {
       </text>
     );
   };
-
   // Process data to add totals for tooltip
   const processDataWithTotals = (data) => {
     const total = data.reduce((sum, item) => sum + item.count, 0);
     return data.map(item => ({ ...item, total }));
   };
-
   return (
     <div className="bg-gray-50 min-h-screen p-6">
       <div className="mb-8">
@@ -199,5 +198,4 @@ function Analytics({ registrations, analyticsData }) {
     </div>
   );
 }
-
 export default Analytics;
