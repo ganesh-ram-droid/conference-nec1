@@ -82,7 +82,9 @@ const ResetPassword = () => {
   return (
     <div className="flex flex-col pt-22 min-h-screen">
       <main className="flex-grow py-8 px-4">
+
         <div className="max-w-md mx-auto bg-white rounded-lg shadow-md p-6">
+          
           <h2 className="text-2xl font-bold text-center mb-6">Reset Password</h2>
           <p className="text-gray-600 text-center mb-6">
             Enter your new password below.

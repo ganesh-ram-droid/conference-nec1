@@ -52,8 +52,12 @@ const Header = () => {
                 <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-300/0 via-blue-200/0 to-purple-200/0 hover:from-blue-300/20 hover:via-blue-200/10 hover:to-purple-200/20 transition-all duration-300 -z-10 blur-sm"></div>
               </button>
 
+              
+
+
               <div className={`absolute left-0 mt-9 w-64 bg-white/98 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/30 transition-all duration-300 origin-top overflow-hidden ${
-                isDropdownOpen 
+                  
+                  isDropdownOpen
                   ? 'opacity-100 scale-100 translate-y-0' 
                   : 'opacity-0 scale-95 translate-y-2 pointer-events-none'
               }`}>

@@ -43,6 +43,7 @@ const Auth = () => {
     else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Invalid email';
     if (!formData.password.trim()) newErrors.password = 'Password is required';
     else if (!isLogin) {
+      //password validation
       let passwordErrors = [];
       if (formData.password.length < 8) passwordErrors.push('at least 8 characters');
       if (!/(?=.*[a-z])/.test(formData.password)) passwordErrors.push('one lowercase letter');
@@ -68,7 +69,10 @@ const Auth = () => {
     try {
       const res = await fetch(url, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: 
+        { 'Content-Type': 'application/json' 
+
+        },
         body: JSON.stringify(formData)
       });
       const data = await res.json();
@@ -114,9 +118,6 @@ const Auth = () => {
 
   return (
     
-
-
-
     <div className="flex flex-col pt-22 min-h-screen">
       <main className="flex-grow py-8 px-4">
        
@@ -191,11 +192,13 @@ const Auth = () => {
               {isLogin ? 'Sign Up' : 'Login'}
             </button>
           </p>
+          
           {isLogin && (
             <p className="mt-2 text-center text-sm text-gray-600">
+             
               <button
                 onClick={() => navigate('/forgot-password')}
-                className="text-blue-500 hover:underline"
+                className="text-blue-500 hover: underline"
               >
                 Forgot your password?
               </button>

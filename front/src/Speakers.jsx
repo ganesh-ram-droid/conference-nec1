@@ -17,8 +17,11 @@ const KeynoteSpeakers = () => {
     { id: 4, name: "Dr. C. Chandra Shekhar", title: "Professor", department: "Department of Computer Science & Engineering", institution: "IIT Madras, Chennai", image: solo },
     { id: 5, name: "Dr. Karthik Ramaswamy", title: "Senior Technology Leader", department: "Senior Technology Leader, Fermi Silicon Designs Pvt Ltd", institution: "Kaikondrahalli, Varthur(h)117, Bellandur, Bangalore", image: karthick },
     { id: 6, name: "Dr. Paolo Sgarbossa", title: "Professore Associato", department: "Dipartimento di Ingegneria Industriale - DII", institution: "Via F. Marzolo, 9 - Padova, Italy", image: paolo },
+    
     { id: 7, name: "Dr. Panchamtcharam", title: "Associate Professor", department: "Department of Mathematics and Statistics", institution: "Yerpedu-Venkatagiri Road, Tirupati", image: Panchamtcharam },
-    { id: 8, name: "Dr. Chidambaram Sabarathinam", title: "Research Scientist", department: "Water Research Center, Kuwait", institution: "Kuwait Institute for Scientific Research", image: chidambaram },
+   
+
+     { id: 8, name: "Dr. Chidambaram Sabarathinam", title: "Research Scientist", department: "Water Research Center, Kuwait", institution: "Kuwait Institute for Scientific Research", image: chidambaram },
     { id: 9, name: "Dr. Shajulin Benedict", title: "Associate Professor", department: "Information Technology , Kottayam", institution: "Indian Institute of Information Technology Kottayam", image: Shajulin }
   ];
 
